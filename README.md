@@ -3,7 +3,36 @@
 跟桌面上的「背單字App」（英文／多益版）**同一套架構、完全獨立的兩個資料夾**。
 進度各存各的，互不影響。
 
-雙擊 `index.html` 就能開，不需要安裝任何東西、不需要網路（發音除外，見下面）。
+在電腦上雙擊 `index.html` 就能開；手機請用下面的網址（不需要安裝任何東西、不需要網路，發音除外）。
+
+---
+
+## 手機上怎麼用
+
+線上網址（GitHub Pages，電腦關機也能開）：
+
+**https://brady1011.github.io/jlpt-vocab-app/**
+
+- **iPhone**：一定要用 **Safari** 開，然後「分享 → 加入主畫面」。
+  用 Chrome for iOS 加出來的捷徑沒有離線能力。
+- **Android**：用 **Chrome** 開，選單 → 「加到主畫面／安裝應用程式」。
+
+加完就有圖示、沒有網址列、離線也能背（第一次開要連網把字庫抓下來）。
+
+進度是存在各裝置自己的瀏覽器裡（`localStorage`，key `jlpt_vocab_v1`），
+**手機和電腦不會同步**。要搬進度就用 App 內「設定 → 匯出進度備份」，
+再到另一台「合併匯入」。跟多益版（key `toeic_vocab_v1`）也是完全分開的兩份進度。
+
+### 改完內容要做兩件事
+
+只做第一件，手機會一直看到舊版：
+
+1. `git add -A && git commit -m "..." && git push`，推上去約一分鐘 GitHub Pages 就重新發佈。
+2. **把 `sw.js` 最上面的 `const CACHE = 'jlpt-vocab-vN'` 往上加一號。**
+   這個 Service Worker 是 cache-first 的，不換 cache 名稱舊快取就不會被淘汰。
+
+`sw.js` 只在 https 或 localhost 下才會註冊，所以在電腦上用 `file://` 雙擊開啟時它不生效——
+這是正常的，不是壞掉。
 
 ---
 
