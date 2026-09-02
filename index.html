@@ -1,0 +1,2484 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>日文背單字</title>
+
+<!-- 手機加到主畫面時用的設定 -->
+<meta name="theme-color" content="#1f2a37">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="日文單字">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<!-- ============================================================
+     樣式：左側選單 + 右側內容（跟觀光署那套版型一樣）
+     ============================================================ -->
+<style>
+  /* --- 顏色變數：改這裡就能換整個 App 的配色 --- */
+  :root{
+    --bg:#f4f6f9; --panel:#ffffff; --line:#e3e8ef;
+    --text:#1c2430; --muted:#6b7787;
+    --side-bg:#1f2a37; --side-text:#c7d0da; --side-active:#2f80ed;
+    --brand:#2f80ed; --ok:#1aa06d; --ng:#e0574a; --warn:#e2a03f;
+    --radius:10px;
+  }
+  html[data-theme="dark"]{
+    --bg:#141a21; --panel:#1c242e; --line:#2c3743;
+    --text:#e6ebf1; --muted:#95a2b3;
+    --side-bg:#111820; --side-text:#b9c4d0; --side-active:#3b8ff0;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:"Segoe UI","Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;
+    font-size:15px; line-height:1.6;
+  }
+
+  /* --- 整體骨架 --- */
+  .app{display:flex; min-height:100vh}
+
+  /* --- 左側選單 --- */
+  .sidebar{
+    width:212px; flex:0 0 212px; background:var(--side-bg); color:var(--side-text);
+    display:flex; flex-direction:column; position:sticky; top:0; height:100vh;
+  }
+  .brand{
+    padding:20px 18px 14px; font-size:17px; font-weight:700; color:#fff;
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .brand small{display:block; font-size:11px; font-weight:400; color:#8d9aa8; margin-top:2px}
+  .nav{padding:10px 8px; flex:1}
+  .nav button{
+    display:flex; align-items:center; gap:9px; width:100%; text-align:left;
+    background:none; border:0; color:var(--side-text); cursor:pointer;
+    padding:10px 12px; border-radius:8px; font-size:14.5px; font-family:inherit;
+  }
+  .nav button:hover{background:rgba(255,255,255,.07); color:#fff}
+  .nav button.active{background:var(--side-active); color:#fff; font-weight:600}
+  .nav .ico{width:20px; text-align:center; font-size:16px}
+  .nav .badge{
+    margin-left:auto; background:var(--ng); color:#fff; font-size:11px;
+    padding:1px 7px; border-radius:99px; font-weight:700;
+  }
+  .side-foot{padding:14px 18px; border-top:1px solid rgba(255,255,255,.08); font-size:12.5px; color:#8d9aa8}
+  .side-foot b{color:#fff; font-size:15px}
+
+  /* --- 右側內容 --- */
+  .main{flex:1; min-width:0; display:flex; flex-direction:column}
+  .topbar{
+    background:var(--panel); border-bottom:1px solid var(--line);
+    padding:14px 24px; display:flex; align-items:center; gap:14px;
+    position:sticky; top:0; z-index:5;
+  }
+  .topbar h1{margin:0; font-size:19px}
+  .topbar .sub{color:var(--muted); font-size:13px}
+  .topbar .right{margin-left:auto; display:flex; gap:8px; align-items:center}
+  .content{padding:24px; max-width:1080px}
+
+  /* --- 通用元件 --- */
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px}
+  .grid{display:grid; gap:14px}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  h2.sec{font-size:15px; margin:26px 0 10px; color:var(--muted); font-weight:600}
+  .btn{
+    background:var(--brand); color:#fff; border:0; border-radius:8px; cursor:pointer;
+    padding:9px 16px; font-size:14.5px; font-family:inherit; font-weight:600;
+  }
+  .btn:hover{filter:brightness(1.08)}
+  .btn.ghost{background:transparent; color:var(--text); border:1px solid var(--line)}
+  .btn.ok{background:var(--ok)} .btn.ng{background:var(--ng)} .btn.warn{background:var(--warn)}
+  .btn.sm{padding:5px 11px; font-size:13px}
+  .btn:disabled{opacity:.45; cursor:default}
+  select,input[type=text],input[type=number]{
+    background:var(--panel); color:var(--text); border:1px solid var(--line);
+    border-radius:8px; padding:8px 10px; font-size:14px; font-family:inherit;
+  }
+  .tile{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px}
+  .tile .n{font-size:30px; font-weight:700; line-height:1.15}
+  .tile .l{color:var(--muted); font-size:13px; margin-top:2px}
+  .bar{height:9px; background:var(--line); border-radius:99px; overflow:hidden}
+  .bar > i{display:block; height:100%; background:var(--brand)}
+  .pill{
+    display:inline-block; font-size:11.5px; padding:1px 8px; border-radius:99px;
+    border:1px solid var(--line); color:var(--muted);
+  }
+  .pill.new{border-color:#c9d3de; color:#7b8794}
+  .pill.learning{border-color:var(--warn); color:var(--warn)}
+  .pill.mastered{border-color:var(--ok); color:var(--ok)}
+  table{width:100%; border-collapse:collapse; font-size:14px}
+  th,td{text-align:left; padding:9px 10px; border-bottom:1px solid var(--line)}
+  th{color:var(--muted); font-weight:600; font-size:12.5px}
+  .jp{font-family:"Yu Gothic","Hiragino Kaku Gothic ProN","Noto Sans JP","Meiryo","Microsoft JhengHei",sans-serif}
+  .muted{color:var(--muted)}
+  .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  .spk{background:none; border:0; cursor:pointer; font-size:16px; color:var(--brand)}
+  /* 表單欄位下方的用途說明 */
+  .fieldhint{
+    color:var(--muted); font-size:12.5px; line-height:1.55; font-weight:400;
+    margin-top:3px; padding-left:9px; border-left:2px solid var(--line);
+  }
+  .fieldhint b{color:var(--text)}
+  /* 搜尋結果反黃 */
+  mark{background:rgba(226,160,63,.45); color:inherit; border-radius:3px; padding:0 1px}
+
+  /* --- 單字卡 --- */
+  .flash{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:44px 28px; text-align:center; min-height:280px;
+    display:flex; flex-direction:column; justify-content:center; gap:10px;
+  }
+  .flash .w{font-size:40px; font-weight:700; letter-spacing:.5px}
+  .flash .ph{color:var(--muted); font-size:15px}
+  .flash .zh{font-size:24px; font-weight:600}
+  .flash .ex{font-size:15px; margin-top:6px}
+  .flash .exzh{font-size:14px; color:var(--muted)}
+  .hr{height:1px; background:var(--line); margin:14px 0}
+
+  /* --- 測驗 --- */
+  .opt{
+    display:block; width:100%; text-align:left; background:var(--panel);
+    border:1px solid var(--line); border-radius:10px; padding:13px 15px;
+    margin-bottom:9px; cursor:pointer; font-size:15px; font-family:inherit; color:var(--text);
+  }
+  .opt:hover:not(:disabled){border-color:var(--brand)}
+  .opt.right{border-color:var(--ok); background:rgba(26,160,109,.10); font-weight:600}
+  .opt.wrong{border-color:var(--ng); background:rgba(224,87,74,.10)}
+  /* 模擬測驗：只表示「我選了這個」，不代表對錯，所以用中性的品牌色 */
+  .opt.sel{border-color:var(--brand); background:rgba(37,99,235,.10); font-weight:600}
+  .opt:disabled{cursor:default}
+  .qstem{font-size:26px; font-weight:700; margin:6px 0 18px}
+  .qstem.small{font-size:19px; font-weight:600; line-height:1.7}
+  .fb{border-radius:10px; padding:13px 15px; margin-top:12px; font-size:14px}
+  .fb.ok{background:rgba(26,160,109,.10); border:1px solid var(--ok)}
+  .fb.ng{background:rgba(224,87,74,.10); border:1px solid var(--ng)}
+
+  /* --- 7 日長條圖 --- */
+  .chart{display:flex; align-items:flex-end; gap:10px; height:130px; padding-top:8px}
+  .chart .col{flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:5px}
+  .chart .bl{width:100%; max-width:38px; background:var(--brand); border-radius:5px 5px 0 0; min-height:2px}
+  .chart .bl.n{background:var(--ok)}
+  .chart .lb{font-size:11px; color:var(--muted)}
+
+  /* --- 手機：選單變成上方橫列 --- */
+  @media (max-width:760px){
+    .app{flex-direction:column}
+    .sidebar{width:100%; flex:none; height:auto; position:static; flex-direction:row; align-items:center; overflow-x:auto}
+    .brand{border:0; padding:12px 14px; white-space:nowrap} .brand small{display:none}
+    .nav{display:flex; padding:8px; gap:4px} .nav button{white-space:nowrap; padding:8px 11px}
+    .nav button span.tx{display:none} .nav .ico{font-size:19px}
+    .side-foot{display:none}
+    .content{padding:16px} .g4{grid-template-columns:repeat(2,1fr)} .g2{grid-template-columns:1fr}
+    .flash .w{font-size:32px}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ===== 左側選單 ===== -->
+  <aside class="sidebar">
+    <div class="brand">🇯🇵 日文背單字<small>JLPT 単語・文法</small></div>
+    <nav class="nav" id="nav">
+      <button data-page="dash"><span class="ico">📊</span><span class="tx">今日進度</span></button>
+      <button data-page="cards"><span class="ico">🗂</span><span class="tx">單字卡</span><span class="badge" id="badgeDue" hidden></span></button>
+      <button data-page="review"><span class="ico">🔁</span><span class="tx">累積複習</span><span class="badge" id="badgeReview" hidden></span></button>
+      <button data-page="quiz"><span class="ico">✍️</span><span class="tx">測驗</span></button>
+      <button data-page="gram"><span class="ico">📝</span><span class="tx">文法練習</span></button>
+      <button data-page="conj"><span class="ico">🔀</span><span class="tx">活用練習</span></button>
+      <button data-page="mock"><span class="ico">🎯</span><span class="tx">模擬測驗</span></button>
+      <button data-page="wrong"><span class="ico">❌</span><span class="tx">錯題本</span><span class="badge" id="badgeWrong" hidden></span></button>
+      <button data-page="lib"><span class="ico">🔖</span><span class="tx">字庫瀏覽</span></button>
+      <button data-page="add"><span class="ico">➕</span><span class="tx">新增單字</span></button>
+      <button data-page="settings"><span class="ico">⚙️</span><span class="tx">設定</span></button>
+    </nav>
+    <div class="side-foot">
+      連續學習 <b id="sideStreak">0</b> 天<br>
+      今日目標 <span id="sideGoal">0 / 0</span>
+    </div>
+  </aside>
+
+  <!-- ===== 右側內容 ===== -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="pageTitle">今日進度</h1>
+        <div class="sub" id="pageSub"></div>
+      </div>
+      <div class="right">
+        <button class="btn ghost sm" id="themeBtn" title="切換深色/淺色">🌓</button>
+      </div>
+    </div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<!-- 內容檔（與程式完全分開，換檔案就換內容） -->
+<script src="data/words.js"></script>
+<script src="data/grammar.js"></script>
+
+<script>
+/* ==================================================================
+   1) 常數與設定
+   ================================================================== */
+const KEY = 'jlpt_vocab_v1';         // localStorage 的存放名稱（故意跟英文版的 toeic_vocab_v1 分開，不然兩個 App 會互相蓋掉進度）
+const BOX_DAYS = [0, 1, 2, 4, 7, 15]; // 舊版固定間隔，現在只用來把舊存檔轉成新格式
+
+/* 適應性排程的參數（SM-2 精簡版）
+   每個字有自己的「難易係數 ease」：答對變大、答錯變小。
+   下次間隔 ＝ 上次間隔 × ease，所以同樣答對，
+   對你來說簡單的字間隔會拉得比難的字快得多。 */
+const EASE_START = 2.3;   // 新字的起始係數
+const EASE_MIN   = 1.3;   // 一直答錯也不會低於這個（不然間隔會卡在 1 天）
+const EASE_MAX   = 2.8;   // 一直答對的上限
+const MAX_INTERVAL = 180; // 間隔最長半年，再久就沒意義了
+const CUSTOM_ID_BASE = 100000;       // 自己在網頁新增的單字，id 從 100000 起跳，不會跟字庫撞號
+
+// data/words.js 產生的字庫（唯讀）
+const BASE_WORDS = (window.WORDS || []).map((w, i) => ({ id: w.id ?? i + 1, ...w }));
+// 實際使用的字庫 ＝ 字庫 ＋ 自己新增的字（下面 rebuildWords() 會組起來）
+let WORDS = [];
+
+const GRAMMAR = window.GRAMMAR || [];   // data/grammar.js 的文法題庫
+
+const PAGE_TITLE = {
+  dash:'今日進度', cards:'單字卡', review:'累積複習', quiz:'測驗', gram:'文法練習', conj:'活用練習', mock:'模擬測驗',
+  wrong:'錯題本', lib:'字庫瀏覽', add:'新增單字', settings:'設定'
+};
+
+/* ==================================================================
+   2) 狀態存取（進度只存在這台裝置的瀏覽器裡）
+   ================================================================== */
+function defaultState(){
+  return {
+    progress:{},      // { 單字id: {box, due, star, seen, ok, ng} }
+    wrongIds:[],      // 錯題本
+    hist:{},          // { 'YYYY-MM-DD': {new, rev} }
+    custom:[],        // 自己在網頁上新增的單字 [{cid, word, pos, ...}]
+    nextCid:1,        // 下一個自訂單字的編號（刪除後不重複使用，進度才不會錯位）
+    gram:{},          // 文法練習成績 { 單元id: {tries, best, wrong:[題號]} }
+    mock:[],          // 模擬測驗歷史 [{date, total, correct, pct, sec, byType}]
+    conj:{},          // 活用練習正確率 { 活用形: {ok, ng} }
+    streak:0, lastDay:'',
+    lastBackup:'',    // 最後一次匯出備份的時間（ISO 字串），用來提醒該備份了
+    cfg:{ newPerDay:10, quizLen:10, dailyGoal:20, theme:'auto', cardMode:'ja2zh' }
+  };
+}
+
+/** 把「字庫」與「自己新增的字」合併成實際使用的 WORDS */
+function rebuildWords(){
+  WORDS = BASE_WORDS.concat(
+    (S.custom || []).map(c => ({ ...c, id: CUSTOM_ID_BASE + c.cid, custom:true }))
+  );
+}
+function load(){
+  try{
+    const s = Object.assign(defaultState(), JSON.parse(localStorage.getItem(KEY) || '{}'));
+    s.cfg = Object.assign(defaultState().cfg, s.cfg || {});
+    // 把舊存檔補成新格式：first（累積複習分組用）、ease/interval/reps（適應性排程用）
+    Object.values(s.progress || {}).forEach(p => {
+      if(!p.first) p.first = s.lastDay || ymd(new Date());
+      if(!p.ease) p.ease = EASE_START;
+      // 舊資料只有 box，就用舊的固定間隔當起點，排程才不會突然跳掉
+      if(p.interval == null) p.interval = BOX_DAYS[Math.min(5, Math.max(1, p.box || 1))] || 1;
+      if(p.reps == null) p.reps = Math.max(0, (p.box || 1) - 1);
+    });
+    return s;
+  }catch(e){ return defaultState(); }
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+let S = load();
+rebuildWords();
+
+/* ==================================================================
+   3) 小工具
+   ================================================================== */
+const $  = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/** 把字串包成可以安全放進 onclick="fn(...)" 的 JS 字面值
+ *  （直接用 JSON.stringify 會產生雙引號，把 HTML 屬性切斷）*/
+const jsAttr = s => JSON.stringify(String(s ?? '')).replace(/"/g, '&quot;');
+
+function ymd(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function today(){ return ymd(new Date()); }
+function addDays(n){ const d = new Date(); d.setDate(d.getDate() + n); return ymd(d); }
+function shuffle(a){ a = a.slice(); for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function pick(a, n){ return shuffle(a).slice(0, n); }
+function byId(id){ return WORDS.find(w => w.id === id); }
+
+/** 判斷是不是假名（平假名、片假名、長音符）。挖克漏字和拼字題都要用 */
+const KANA = /[ぁ-ゟ゠-ヿー]/;
+const isKana = s => !!s && [...s].every(c => KANA.test(c));
+
+/** 漢字上面標假名。瀏覽器原生支援 <ruby>，不用外掛
+ *  只有「表記跟讀音不一樣」時才標（純假名的字不用標自己） */
+function ruby(w){
+  if(!w.kana || w.kana === w.word || isKana(w.word)) return esc(w.word);
+  return '<ruby>' + esc(w.word) + '<rt>' + esc(w.kana) + '</rt></ruby>';
+}
+
+/** 用瀏覽器內建語音唸出日文（免費、不需 API）
+ *  唸單字時傳假名進來，漢字的多音字才不會唸錯（例：生／行）
+ *  註：Windows 若沒裝日文語音，要到「設定 → 時間與語言 → 語音」加裝日文，
+ *      或保持連網用線上語音；手機（Android／iOS）內建日文語音可離線用。 */
+let muteSpeak = false;   // 模擬測驗改考卷時要一次算完所有題目，這時不要讓它連續唸出來
+function speak(text){
+  if(muteSpeak) return;
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ja-JP'; u.rate = 0.9;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+window.speak = speak;
+
+/** 三種狀態：未學 / 學習中 / 熟練 */
+function status(w){
+  const p = S.progress[w.id];
+  if(!p) return 'new';
+  return p.box >= 5 ? 'mastered' : 'learning';
+}
+const STATUS_TXT = { new:'未學', learning:'學習中', mastered:'熟練' };
+
+/* ==================================================================
+   4) 間隔重複排程（這個 App 的核心）
+   ================================================================== */
+
+/** 今天到期該複習的字 */
+function dueList(){
+  const t = today();
+  return WORDS.filter(w => { const p = S.progress[w.id]; return p && p.due <= t; });
+}
+/** 今天還能學的新字（受每日上限控制） */
+function newList(){
+  const done = (S.hist[today()] || {}).new || 0;
+  const left = Math.max(0, S.cfg.newPerDay - done);
+  return WORDS.filter(w => !S.progress[w.id]).slice(0, left);
+}
+/** 今天的完整佇列＝到期複習 ＋ 新字 */
+function todayQueue(){ return dueList().concat(newList()); }
+
+/** 記錄「今天有學習」，並更新連續天數 */
+function touchStudy(){
+  const t = today();
+  if(S.lastDay === t) return;
+  S.streak = (S.lastDay === addDays(-1)) ? S.streak + 1 : 1;
+  S.lastDay = t;
+}
+
+/**
+ * 算出「如果現在這樣回答，之後會變成什麼狀態」。
+ * 不會動到原本的資料，所以也可以拿來在按鈕上預覽「會了→14 天後」。
+ * q = 'again'(不會) | 'hard'(模糊) | 'good'(會了)
+ */
+function schedule(p, q){
+  const ease0 = (p && p.ease) || EASE_START;
+  const iv0   = (p && p.interval) || 0;
+  const reps0 = (p && p.reps) || 0;
+  const box0  = (p && p.box) || 1;
+  let ease = ease0, interval, reps = reps0, box = box0;
+
+  if(q === 'again'){
+    // 答錯：係數扣重一點，間隔歸零重來，盒子退回第 1 盒
+    ease = Math.max(EASE_MIN, ease0 - 0.25);
+    interval = 1; reps = 0; box = 1;
+  }else if(q === 'hard'){
+    // 模糊：算答對但係數微降，間隔只小幅成長
+    ease = Math.max(EASE_MIN, ease0 - 0.1);
+    interval = reps0 === 0 ? 1 : Math.max(1, Math.round(iv0 * 1.2));
+    reps = reps0 + 1;
+  }else{
+    // 會了：係數微升，間隔乘上係數
+    ease = Math.min(EASE_MAX, ease0 + 0.05);
+    interval = reps0 === 0 ? 1 : (reps0 === 1 ? 3 : Math.round(iv0 * ease));
+    reps = reps0 + 1;
+    box = Math.min(5, box0 + 1);
+  }
+  interval = Math.min(MAX_INTERVAL, Math.max(1, interval));
+  return { ease: Math.round(ease * 100) / 100, interval, reps, box };
+}
+
+/**
+ * 評分。這是唯一會改動排程的地方 ——
+ * 單字卡、測驗、累積複習、模擬測驗全部走這裡。
+ */
+/** defer=true 時不存檔、不刷選單，交給呼叫端算完一整份考卷後統一做一次 */
+function grade(id, q, defer){
+  touchStudy();
+  const t = today();
+  const isNew = !S.progress[id];
+  // first ＝ 第一次學這個字的日期，累積複習就是靠它分組（之後不會再改）
+  const p = S.progress[id] || (S.progress[id] = {
+    box:1, due:t, first:t, star:false, seen:0, ok:0, ng:0,
+    ease:EASE_START, interval:0, reps:0
+  });
+  if(!p.first) p.first = t;
+  p.seen++;
+
+  const h = S.hist[t] || (S.hist[t] = { new:0, rev:0 });
+  isNew ? h.new++ : h.rev++;
+
+  const n = schedule(p, q);
+  p.ease = n.ease; p.interval = n.interval; p.reps = n.reps; p.box = n.box;
+  p.due = addDays(n.interval);
+
+  if(q === 'again'){
+    p.ng++;
+    if(!S.wrongIds.includes(id)) S.wrongIds.push(id);
+  }else{
+    p.ok++;
+    if(p.box >= 4) S.wrongIds = S.wrongIds.filter(x => x !== id);  // 答對到第 4 盒才從錯題本畢業
+  }
+  if(defer) return;
+  save(); refreshChrome();
+}
+
+/* ==================================================================
+   5) 路由（左側選單切換頁面）
+   ================================================================== */
+let page = 'dash';
+function go(p){
+  page = p;
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('active', b.dataset.page === p));
+  $('#pageTitle').textContent = PAGE_TITLE[p];
+  $('#pageSub').textContent = '';
+  refreshChrome();      // 每次換頁重算選單上的紅點，數字才不會過期
+  render();
+  window.scrollTo(0, 0);
+}
+$('#nav').addEventListener('click', e => {
+  const b = e.target.closest('button[data-page]');
+  if(b) go(b.dataset.page);
+});
+
+function render(){
+  const box = $('#content');
+  // 字庫是空的時候，只放行不需要單字的頁面（文法練習用的是自己的題庫）
+  if(!WORDS.length && !['add','settings','gram'].includes(page)){ box.innerHTML = noDataHtml(); return; }
+  ({ dash:renderDash, cards:renderCards, review:renderReview, quiz:renderQuiz, gram:renderGram,
+     conj:renderConj, mock:renderMock, wrong:renderWrong, lib:renderLib, add:renderAdd, settings:renderSettings }[page])(box);
+}
+
+/** 左側選單的紅點與底部資訊 */
+function refreshChrome(){
+  const d = todayQueue().length, w = S.wrongIds.length, r = reviewPool().length;
+  $('#badgeDue').hidden = !d;   $('#badgeDue').textContent = d;
+  $('#badgeWrong').hidden = !w; $('#badgeWrong').textContent = w;
+  $('#badgeReview').hidden = !r; $('#badgeReview').textContent = r;
+  $('#sideStreak').textContent = S.streak;
+  const h = S.hist[today()] || { new:0, rev:0 };
+  $('#sideGoal').textContent = (h.new + h.rev) + ' / ' + S.cfg.dailyGoal;
+}
+
+function noDataHtml(){
+  return `<div class="card">
+    <h3 style="margin-top:0">還沒有單字資料</h3>
+    <p class="muted">找不到 <code>data/words.js</code>，或裡面是空的。</p>
+    <p>兩種補法：</p>
+    <ol>
+      <li>在這個資料夾執行 <code class="jp">python gen_words.py</code> 產生整份字庫，再重新整理。</li>
+      <li>或者直接在網頁上自己加字 →
+        <button class="btn sm" onclick="go('add')">新增單字</button></li>
+    </ol>
+  </div>`;
+}
+
+/* ==================================================================
+   6) 頁面：今日進度
+   ================================================================== */
+function renderDash(box){
+  const t = today();
+  const cnt = { new:0, learning:0, mastered:0 };
+  WORDS.forEach(w => cnt[status(w)]++);
+  const due = todayQueue().length;
+  const h = S.hist[t] || { new:0, rev:0 };
+  const doneToday = h.new + h.rev;
+  const pct = Math.min(100, Math.round(doneToday / Math.max(1, S.cfg.dailyGoal) * 100));
+
+  // 近 7 天
+  const days = [];
+  for(let i = 6; i >= 0; i--){
+    const k = addDays(-i), r = S.hist[k] || { new:0, rev:0 };
+    days.push({ k, ...r, total:r.new + r.rev });
+  }
+  const max = Math.max(10, ...days.map(d => d.total));
+
+  // 最常錯的字
+  const worst = WORDS
+    .filter(w => (S.progress[w.id] || {}).ng > 0)
+    .sort((a,b) => S.progress[b.id].ng - S.progress[a.id].ng)
+    .slice(0, 5);
+
+  $('#pageSub').textContent = t + '　共 ' + WORDS.length + ' 字';
+
+  const d = daysSinceBackup();
+  const banner = needsBackup() ? `
+    <div class="card" style="border-color:var(--warn);background:rgba(226,160,63,.08);margin-bottom:16px">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <b>⚠ 你的進度還沒備份</b>
+          <div class="muted" style="font-size:13px;margin-top:4px">
+            目前有 <b>${Object.keys(S.progress).length}</b> 個字的學習進度、
+            <b>${S.custom.length}</b> 個自己新增的單字、
+            <b>${Object.keys(S.gram).length}</b> 個文法單元的成績，
+            全部只存在這個瀏覽器裡。${d === null ? '從來沒有備份過。' : '上次備份是 ' + d + ' 天前。'}<br>
+            換瀏覽器、換手機、清快取都會不見。
+          </div>
+        </div>
+        <button class="btn warn" onclick="expJson()">立即匯出備份</button>
+      </div>
+    </div>` : '';
+
+  box.innerHTML = banner + `
+    <div class="grid g4">
+      <div class="tile"><div class="n" style="color:var(--brand)">${due}</div><div class="l">今天待複習</div></div>
+      <div class="tile"><div class="n" style="color:var(--ok)">${cnt.mastered}</div><div class="l">已熟練</div></div>
+      <div class="tile"><div class="n" style="color:var(--warn)">${cnt.learning}</div><div class="l">學習中</div></div>
+      <div class="tile"><div class="n" style="color:var(--muted)">${cnt.new}</div><div class="l">未學</div></div>
+    </div>
+
+    <h2 class="sec">今日目標</h2>
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div>已完成 <b>${doneToday}</b> / ${S.cfg.dailyGoal} 題
+          <span class="muted">（新字 ${h.new}、複習 ${h.rev}）</span></div>
+        <div>🔥 連續 <b>${S.streak}</b> 天</div>
+      </div>
+      <div class="bar" style="margin-top:10px"><i style="width:${pct}%"></i></div>
+      <div class="row" style="margin-top:14px">
+        <button class="btn" onclick="go('cards')">${due ? '開始今天的複習（' + due + '）' : '額外練習'}</button>
+        <button class="btn ghost" onclick="go('quiz')">來一輪測驗</button>
+      </div>
+    </div>
+
+    <h2 class="sec">近 7 天</h2>
+    <div class="card">
+      <div class="chart">
+        ${days.map(d => `
+          <div class="col" title="${d.k}：新字 ${d.new}、複習 ${d.rev}">
+            <div class="lb">${d.total || ''}</div>
+            <div class="bl n" style="height:${d.new / max * 92}px"></div>
+            <div class="bl"   style="height:${d.rev / max * 92}px"></div>
+            <div class="lb">${d.k.slice(5)}</div>
+          </div>`).join('')}
+      </div>
+      <div class="muted" style="font-size:12.5px;margin-top:8px">
+        <span style="color:var(--ok)">■</span> 新字　<span style="color:var(--brand)">■</span> 複習
+      </div>
+    </div>
+
+    <h2 class="sec">最常答錯</h2>
+    <div class="card">
+      ${worst.length ? `<table><tbody>${worst.map(w => `
+        <tr><td class="jp"><b>${esc(w.word)}</b></td><td>${esc(w.zh)}</td>
+        <td class="muted" style="text-align:right">錯 ${S.progress[w.id].ng} 次</td></tr>`).join('')}
+      </tbody></table>` : '<span class="muted">還沒有錯題紀錄。</span>'}
+    </div>`;
+}
+
+/* ==================================================================
+   7) 頁面：單字卡
+   ================================================================== */
+let cardQueue = [], cardFlipped = false, extraMode = false;
+
+/* 單字卡的三種顯示模式。存在 cfg 裡，下次打開還記得。 */
+const CARD_MODES = [
+  { k:'ja2zh', n:'日 → 中', tip:'正面只有日文，翻開才看中文（預設，練認字）' },
+  { k:'zh2ja', n:'中 → 日', tip:'正面只有中文，翻開才看日文（練回想）' },
+  { k:'both',  n:'日中對照', tip:'日文和中文一起顯示，不用翻牌（快速複習用）' },
+];
+function cardMode(){ return S.cfg.cardMode || 'ja2zh'; }
+/** 中英對照模式不需要翻牌，一開始就算「已翻開」 */
+function revealed(){ return cardMode() === 'both' || cardFlipped; }
+function setCardMode(m){
+  S.cfg.cardMode = m;
+  cardFlipped = false;
+  save(); render();
+}
+
+function renderCards(box){
+  if(!cardQueue.length){
+    cardQueue = todayQueue();
+    extraMode = false;
+    if(!cardQueue.length){                    // 今天排程清空 → 提供額外練習
+      cardQueue = pick(WORDS.filter(w => S.progress[w.id]), 20);
+      extraMode = true;
+    }
+    cardFlipped = false;
+  }
+
+  if(!cardQueue.length){
+    box.innerHTML = `<div class="card" style="text-align:center;padding:40px">
+      <div style="font-size:40px">🎉</div>
+      <h3>今天沒有要複習的字了</h3>
+      <p class="muted">到「設定」提高每日新字上限，就能繼續往前學。</p>
+      <button class="btn" onclick="go('lib')">去字庫挑字</button></div>`;
+    return;
+  }
+
+  const w = cardQueue[0];
+  const p = S.progress[w.id];
+  $('#pageSub').textContent = (extraMode ? '額外練習・' : '') + '剩 ' + cardQueue.length + ' 張'
+    + (p ? '　第 ' + p.box + ' 盒・間隔 ' + (p.interval || 1) + ' 天・難易 ' + (p.ease || EASE_START) : '　新字');
+
+  // 三個按鈕先算出「按下去之後多久再出現」，讓你看得到排程怎麼變
+  const pv = { again: schedule(p, 'again'), hard: schedule(p, 'hard'), good: schedule(p, 'good') };
+  const d = n => n === 1 ? '明天' : n + ' 天後';
+
+  const mode = cardMode();
+  const open = revealed();          // 這一面該不該把答案顯示出來
+
+  // 三個可以組合的區塊：日文、中文、例句（日中對照）
+  // 漢字上面用瀏覽器原生的 <ruby> 標假名，不用自己畫
+  const jaBlock = `
+    <div>
+      <div class="w jp">${ruby(w)}
+        <button class="spk" onclick="speak(${jsAttr(w.kana || w.word)})">🔊</button></div>
+      <div class="ph jp">${esc(w.phonetic || '')}
+        ${w.pos ? '<span class="pill">' + esc(w.pos) + '</span>' : ''}
+        ${w.level ? '<span class="pill">' + esc(w.level) + '</span>' : ''}</div>
+    </div>`;
+  const zhBlock = `<div class="zh">${esc(w.zh)}</div>`;
+  const exBlock = w.example ? `
+    <div class="ex jp">${esc(w.example)}
+      <button class="spk" onclick="speak(${jsAttr(w.example)})">🔊</button></div>
+    <div class="exzh">${esc(w.example_zh || '')}</div>` : '';
+  const topicBlock = (w.topic || []).map(t => '<span class="pill">' + esc(t) + '</span>').join(' ');
+
+  // 每種模式決定「先看到什麼、翻開後看到什麼」
+  const front = mode === 'zh2ja' ? zhBlock : jaBlock;
+  const back  = mode === 'zh2ja' ? jaBlock : zhBlock;
+  const hint  = mode === 'zh2ja' ? '想一下日文怎麼說' : '想一下中文意思';
+
+  box.innerHTML = `
+    <div class="row" style="margin-bottom:14px;justify-content:center">
+      ${CARD_MODES.map(m => `<button class="btn sm ${mode === m.k ? '' : 'ghost'}"
+        onclick="setCardMode(${jsAttr(m.k)})" title="${esc(m.tip)}">${esc(m.n)}</button>`).join('')}
+    </div>
+
+    <div class="flash">
+      ${front}
+      ${open ? `
+        <div class="hr"></div>
+        ${back}
+        ${exBlock}
+        ${topicBlock}
+      ` : `<div class="muted">${hint}<br>按空白鍵或下面的按鈕看解答</div>`}
+    </div>
+
+    <div class="row" style="margin-top:16px;justify-content:center">
+      ${open ? `
+        <button class="btn ng"   onclick="ans('again')">不會<small style="font-weight:400"> · ${d(pv.again.interval)}</small></button>
+        <button class="btn warn" onclick="ans('hard')">模糊<small style="font-weight:400"> · ${d(pv.hard.interval)}</small></button>
+        <button class="btn ok"   onclick="ans('good')">會了<small style="font-weight:400"> · ${d(pv.good.interval)}</small></button>
+      ` : `<button class="btn" onclick="flip()">看解答</button>`}
+      <button class="btn ghost" onclick="star(${w.id})">${p && p.star ? '★ 已標重點' : '☆ 標記重點'}</button>
+    </div>
+    <div class="muted" style="text-align:center;margin-top:10px;font-size:12.5px">
+      快捷鍵：空白＝${mode === 'both' ? '會了' : '翻牌'}　1＝不會　2＝模糊　3＝會了
+    </div>`;
+}
+function flip(){ cardFlipped = true; render(); }
+function ans(q){
+  const w = cardQueue.shift();
+  grade(w.id, q);
+  cardFlipped = false;
+  render();
+}
+function star(id){
+  const p = S.progress[id] || (S.progress[id] = { box:1, due:today(), star:false, seen:0, ok:0, ng:0 });
+  p.star = !p.star; save(); render();
+}
+
+/* 任何頁面按 / 就跳到字庫瀏覽並把游標放進搜尋框（在輸入框裡打字時不觸發） */
+document.addEventListener('keydown', e => {
+  if(e.key !== '/' || e.ctrlKey || e.altKey || e.metaKey) return;
+  const t = e.target.tagName;
+  if(t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return;
+  e.preventDefault();
+  if(page !== 'lib') go('lib');
+  const n = $('#fq');
+  if(n){ n.focus(); n.select(); }
+});
+
+document.addEventListener('keydown', e => {
+  if(page !== 'cards' || !cardQueue.length) return;
+  if(e.code === 'Space'){ e.preventDefault(); revealed() ? ans('good') : flip(); }
+  if(revealed() && ['1','2','3'].includes(e.key)) ans({ '1':'again','2':'hard','3':'good' }[e.key]);
+});
+
+/* ==================================================================
+   8) 頁面：累積複習
+   ------------------------------------------------------------------
+   跟「單字卡」的間隔重複是兩套不同的邏輯，各自獨立：
+
+     單字卡    ＝ 依 Leitner 五盒法算出的 due 日期，到期才出現（會越背越少）
+     累積複習  ＝ 今天以前學過的字全部再考一次（會越背越多）
+
+   第 2 天考第 1 天的字；第 3 天考第 1、2 天的字，以此類推。
+   兩邊答題都會回寫同一份進度，所以不會各算一套。
+   ================================================================== */
+/** 把學過的字按「第一次學的日期」分組 → [{date, words}]，早的排前面 */
+function learnedByDay(){
+  const map = {};
+  WORDS.forEach(w => {
+    const p = S.progress[w.id];
+    if(!p || !p.first) return;
+    (map[p.first] || (map[p.first] = [])).push(w);
+  });
+  return Object.keys(map).sort().map(date => ({ date, words: map[date] }));
+}
+
+/** 今天要累積複習的字 ＝ 今天以前學過的全部 */
+function reviewPool(){
+  const t = today();
+  return learnedByDay().filter(g => g.date < t).flatMap(g => g.words);
+}
+
+function renderReview(box){
+  const t = today();
+  const days = learnedByDay();
+  const past = days.filter(g => g.date < t);
+  const todayGroup = days.find(g => g.date === t);
+  const pool = past.flatMap(g => g.words);
+  $('#pageSub').textContent = pool.length
+    ? '今天要複習 ' + pool.length + ' 字（來自 ' + past.length + ' 天）'
+    : '還沒有累積的字';
+
+  if(!days.length){
+    box.innerHTML = `<div class="card">
+      <h3 style="margin-top:0">還沒有學過的字</h3>
+      <p class="muted">先去「單字卡」背幾個字，明天這裡就會出現昨天學的字。</p>
+      <button class="btn" onclick="go('cards')">去背單字</button></div>`;
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="card">
+      <h3 style="margin-top:0">今天的累積複習</h3>
+      <p class="muted" style="margin-top:4px">
+        把<b>今天以前</b>學過的字全部再考一次。第 2 天考第 1 天的、第 3 天考前兩天的，越滾越多。</p>
+      ${pool.length ? `
+        <div class="grid g4" style="margin:14px 0">
+          <div class="tile"><div class="n" style="color:var(--brand)">${pool.length}</div><div class="l">要複習的字</div></div>
+          <div class="tile"><div class="n">${past.length}</div><div class="l">累積天數</div></div>
+          <div class="tile"><div class="n" style="color:var(--ok)">${pool.filter(w => status(w) === 'mastered').length}</div><div class="l">其中已熟練</div></div>
+          <div class="tile"><div class="n" style="color:var(--warn)">${todayGroup ? todayGroup.words.length : 0}</div><div class="l">今天新學（明天才考）</div></div>
+        </div>
+        <div class="row">
+          <label>每輪題數
+            <select id="rvLen" style="margin-left:6px">
+              <option value="20">20 題</option>
+              <option value="30">30 題</option>
+              <option value="50">50 題</option>
+              <option value="0">全部 ${pool.length} 題</option>
+            </select></label>
+          <button class="btn" onclick="startReviewQuiz('')">開始複習測驗</button>
+          <button class="btn ghost" onclick="startReviewCards('')">用單字卡複習</button>
+        </div>
+        <div class="muted" style="font-size:12.5px;margin-top:10px">
+          字數會一直長大，所以建議用「每輪題數」控制，或在下面挑某一天單獨複習。
+        </div>`
+      : `<p>今天以前還沒有學過的字。<b>今天學的 ${todayGroup ? todayGroup.words.length : 0} 個字，明天就會出現在這裡。</b></p>
+         <button class="btn" onclick="go('cards')">繼續背新字</button>`}
+    </div>
+
+    <h2 class="sec">逐日明細</h2>
+    <div class="card" style="overflow-x:auto"><table>
+      <thead><tr><th>第幾天</th><th>學習日期</th><th>字數</th><th>熟練</th><th>學習中</th><th></th></tr></thead>
+      <tbody>${days.map((g, i) => {
+        const isToday = g.date === t;
+        const mastered = g.words.filter(w => status(w) === 'mastered').length;
+        return `<tr>
+          <td>第 ${i + 1} 天${isToday ? ' <span class="pill">今天</span>' : ''}</td>
+          <td class="jp">${esc(g.date)}</td>
+          <td>${g.words.length}</td>
+          <td style="color:var(--ok)">${mastered}</td>
+          <td style="color:var(--warn)">${g.words.length - mastered}</td>
+          <td style="white-space:nowrap">${isToday
+            ? '<span class="muted" style="font-size:12.5px">今天剛學，明天開始複習</span>'
+            : `<button class="btn sm ghost" onclick="startReviewQuiz(${jsAttr(g.date)})">只考這天</button>
+               <button class="btn sm ghost" onclick="startReviewCards(${jsAttr(g.date)})">看卡片</button>`}</td>
+        </tr>`;
+      }).join('')}</tbody></table></div>`;
+}
+
+/** date 給空字串＝全部累積；給日期＝只考那一天 */
+function reviewWords(date){
+  if(!date) return reviewPool();
+  const g = learnedByDay().find(x => x.date === date);
+  return g ? g.words.slice() : [];
+}
+function reviewLen(){
+  const el = $('#rvLen');
+  return el ? +el.value : 0;      // 0 ＝ 全部
+}
+
+function startReviewQuiz(date){
+  const pool = reviewWords(date);
+  if(!pool.length){ alert('這個範圍沒有字可以複習。'); return; }
+  const n = date ? pool.length : (reviewLen() || pool.length);
+  quiz = {
+    items: pick(pool, Math.min(n, pool.length))
+      .map(w => ({ w, mode: MODES[Math.floor(Math.random() * MODES.length)].k })),
+    i:0, wrong:[], answered:null
+  };
+  go('quiz');
+}
+
+function startReviewCards(date){
+  const pool = reviewWords(date);
+  if(!pool.length){ alert('這個範圍沒有字可以複習。'); return; }
+  const n = date ? pool.length : (reviewLen() || pool.length);
+  cardQueue = pick(pool, Math.min(n, pool.length));
+  cardFlipped = false;
+  extraMode = true;               // 借用單字卡畫面，標記成額外練習
+  go('cards');
+}
+
+/* ==================================================================
+   9) 頁面：測驗
+   ================================================================== */
+const MODES = [
+  { k:'ja2zh',  n:'日選中（看日文選中文）' },
+  { k:'zh2ja',  n:'中選日（看中文選日文）' },
+  { k:'listen', n:'聽音選字（聽發音選單字）' },
+  { k:'cloze',  n:'克漏字（例句填空・JLPT 語彙題型）' },
+  { k:'spell',  n:'拼假名（看中文和漢字打出讀音）' },
+];
+let quiz = null;   // { items, i, wrong[], mode, answered }
+
+function renderQuiz(box){
+  if(!quiz) return renderQuizSetup(box);
+  if(quiz.i >= quiz.items.length) return renderQuizResult(box);
+  renderQuizItem(box);
+}
+
+function renderQuizSetup(box){
+  const topics = [...new Set(WORDS.flatMap(w => w.topic || []))].sort();
+  const levels = ['N5','N4','N3','N2','N1'].filter(x => WORDS.some(w => w.level === x));
+  box.innerHTML = `
+    <div class="card">
+      <h3 style="margin-top:0">設定這一輪測驗</h3>
+      <div class="grid g2" style="margin-top:14px">
+        <label>出題範圍<br>
+          <select id="qScope" style="width:100%;margin-top:6px">
+            <option value="due">今天待複習的字（${todayQueue().length}）</option>
+            <option value="review">累積複習：今天以前學過的（${reviewPool().length}）</option>
+            <option value="wrong">錯題本（${S.wrongIds.length}）</option>
+            <option value="star">標記重點的字</option>
+            <option value="learning">學習中的字</option>
+            <option value="all">全部單字（${WORDS.length}）</option>
+            ${levels.map(x => `<option value="level:${esc(x)}">JLPT ${esc(x)}（${WORDS.filter(w => w.level === x).length}）</option>`).join('')}
+            ${topics.map(t => `<option value="topic:${esc(t)}">主題：${esc(t)}</option>`).join('')}
+          </select></label>
+        <label>題型<br>
+          <select id="qMode" style="width:100%;margin-top:6px">
+            <option value="mix">綜合（隨機混合，最推薦）</option>
+            ${MODES.map(m => `<option value="${m.k}">${m.n}</option>`).join('')}
+          </select></label>
+        <label>題數<br>
+          <input id="qLen" type="number" min="5" max="60" value="${S.cfg.quizLen}" style="width:100%;margin-top:6px"></label>
+      </div>
+      <button class="btn" style="margin-top:16px" onclick="startQuiz()">開始測驗</button>
+    </div>
+    <h2 class="sec">題型說明</h2>
+    <div class="card"><table><tbody>
+      ${MODES.map(m => `<tr><td style="width:34%"><b>${m.n.split('（')[0]}</b></td>
+        <td class="muted">${m.n.split('（')[1].replace('）','')}</td></tr>`).join('')}
+    </tbody></table></div>`;
+}
+
+/** 依範圍取出候選單字 */
+function scopeWords(scope){
+  if(scope === 'due')      return todayQueue();
+  if(scope === 'review')   return reviewPool();
+  if(scope === 'wrong')    return S.wrongIds.map(byId).filter(Boolean);
+  if(scope === 'star')     return WORDS.filter(w => (S.progress[w.id] || {}).star);
+  if(scope === 'learning') return WORDS.filter(w => status(w) === 'learning');
+  if(scope.startsWith('topic:')) return WORDS.filter(w => (w.topic || []).includes(scope.slice(6)));
+  if(scope.startsWith('level:')) return WORDS.filter(w => (w.level || '') === scope.slice(6));
+  return WORDS;
+}
+
+function startQuiz(){
+  const scope = $('#qScope').value, mode = $('#qMode').value;
+  const len = Math.max(1, Math.min(60, +$('#qLen').value || 10));
+  S.cfg.quizLen = len; save();
+
+  let pool = scopeWords(scope);
+  if(!pool.length){ alert('這個範圍還沒有單字，換一個範圍試試。'); return; }
+  if(WORDS.length < 4 && mode !== 'spell'){
+    alert('字庫少於 4 個字，湊不出四個選項。先多加幾個字，或改用「拼假名」題型。');
+    return;
+  }
+  const items = pick(pool, Math.min(len, pool.length)).map(w => ({ w, mode: mode === 'mix' ? MODES[Math.floor(Math.random()*MODES.length)].k : mode }));
+  quiz = { items, i:0, wrong:[], answered:null };
+  render();
+}
+
+/** 例句挖空；挖不掉就回 null（避免出壞題）
+ *
+ *  日文跟英文最大的差別：**不能用 \b**。
+ *  \b 是靠 [A-Za-z0-9_] 判斷邊界的，日文字全都算「非文字」，
+ *  所以「\b会議」在「来週の会議は…」裡永遠比對不到（實測 false）。
+ *  日文沒有空格，直接用 includes 反而更乾淨。
+ *
+ *  三段策略：
+ *   1) 整個詞直接出現 —— 名詞、副詞、な形容詞大多是這種（会議 → 会議）
+ *   2) 動詞・い形容詞會活用 —— 去掉語尾一到二字取語幹，再連後面的假名一起挖
+ *      （始まる → 語幹「始ま」→ 挖掉「始まります」）
+ *   3) 詞條寫漢字但例句寫假名（或反之）—— 用假名讀音再試一次 */
+function blankOut(sent, word, kana){
+  if(!sent || !word) return null;
+  const BLANK = '______';
+  const rx = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');   // 正規表達式特殊字元要跳脫
+
+  // 1) 整個詞
+  if(sent.includes(word)) return sent.replace(word, BLANK);
+
+  // 2) 去語尾取語幹，再把後面接的假名一起吃掉（活用形）
+  for(let cut = 1; cut <= 2; cut++){
+    const stem = word.slice(0, -cut);
+    if(stem.length < 1) break;
+    if(sent.includes(stem)){
+      const re = new RegExp(rx(stem) + '[ぁ-ゟ゠-ヿー]*');
+      return sent.replace(re, BLANK);
+    }
+  }
+
+  // 3) 換成假名讀音再試（詞條漢字、例句寫假名的情況）
+  if(kana && kana !== word){
+    if(sent.includes(kana)) return sent.replace(kana, BLANK);
+    for(let cut = 1; cut <= 2; cut++){
+      const stem = kana.slice(0, -cut);
+      if(stem.length < 2) break;
+      if(sent.includes(stem)){
+        const re = new RegExp(rx(stem) + '[ぁ-ゟ゠-ヿー]*');
+        return sent.replace(re, BLANK);
+      }
+    }
+  }
+  return null;
+}
+
+/** 產生 3 個干擾選項（優先挑同主題、同詞性的字，比較有難度） */
+function distractors(w, n = 3){
+  const same = WORDS.filter(x => x.id !== w.id && x.pos === w.pos && (w.topic || []).some(t => (x.topic || []).includes(t)));
+  const rest = WORDS.filter(x => x.id !== w.id && !same.includes(x));
+  return pick(same, n).concat(pick(rest, n)).slice(0, n);
+}
+
+/** 把一題的題幹、選項、正解算出來並存進 it.shown。
+ *  只算一次 —— 作答後畫面會重繪，如果每次都重算，選項會重新洗牌、
+ *  干擾選項也會換人，對錯就標錯了。 */
+function buildQuestion(it){
+  if(it.shown) return it.shown;
+  const w = it.w;
+  let mode = it.mode;
+  let stem, opts, correct, small = false;
+
+  const say = w.kana || w.word;             // 唸的一律是假名，多音字才不會唸錯
+
+  if(mode === 'cloze'){
+    const s = blankOut(w.example, w.word, w.kana);
+    if(s){ stem = esc(s); small = true; opts = distractors(w).map(x => x.word).concat(w.word); correct = w.word; }
+    else mode = 'ja2zh';                    // 挖不掉 → 自動退回日選中
+  }
+  if(mode === 'ja2zh'){
+    stem = `<span class="jp">${ruby(w)}</span> <button class="spk" onclick="speak(${jsAttr(say)})">🔊</button>`;
+    opts = distractors(w).map(x => x.zh).concat(w.zh); correct = w.zh;
+  }else if(mode === 'zh2ja'){
+    stem = esc(w.zh); opts = distractors(w).map(x => x.word).concat(w.word); correct = w.word;
+  }else if(mode === 'listen'){
+    stem = `<button class="btn ghost" onclick="speak(${jsAttr(say)})">🔊 再聽一次</button>`;
+    opts = distractors(w).map(x => x.word).concat(w.word); correct = w.word;
+    speak(say);                             // 只在第一次顯示時自動唸一次
+  }else if(mode === 'spell'){
+    // 日文版的「拼假名」＝看中文和漢字，把讀音打出來（比打漢字實用，也不用切輸入法打漢字）
+    opts = null; correct = say;
+    const n = [...say].length;
+    stem = `${esc(w.zh)}　<span class="jp">${esc(w.word)}</span>
+      <span class="muted jp" style="font-size:18px">（${esc([...say][0])}${'○'.repeat(n - 1)}・${n} 個假名）</span>`;
+    small = true;
+  }
+  // 選項去重（干擾選項的中文可能剛好跟正解一樣）
+  it.shown = { correct, opts: opts ? shuffle([...new Set(opts)]) : null, mode, stem, small };
+  return it.shown;
+}
+
+function renderQuizItem(box){
+  const it = quiz.items[quiz.i], w = it.w;
+  const { correct, mode, stem, small } = buildQuestion(it);
+
+  const a = quiz.answered;   // 已作答的話，顯示對錯與解析
+  box.innerHTML = `
+    <div class="row" style="justify-content:space-between">
+      <span class="muted">第 ${quiz.i + 1} / ${quiz.items.length} 題
+        <span class="pill">${MODES.find(m => m.k === mode).n.split('（')[0]}</span></span>
+      <span class="muted">答對 ${quiz.i - quiz.wrong.length} 題</span>
+    </div>
+    <div class="bar" style="margin:10px 0 18px"><i style="width:${quiz.i / quiz.items.length * 100}%"></i></div>
+
+    <div class="qstem ${small ? 'small' : ''}">${stem}</div>
+
+    ${it.shown.opts ? it.shown.opts.map(o => `
+      <button class="opt ${a ? (o === correct ? 'right' : (o === a.chosen ? 'wrong' : '')) : ''}"
+        ${a ? 'disabled' : ''} onclick="answer(${jsAttr(o)})">${esc(o)}</button>`).join('')
+      : `<div class="row">
+          <input id="spellIn" type="text" class="jp" placeholder="輸入假名讀音" autocomplete="off"
+            style="flex:1;font-size:18px;padding:12px" ${a ? 'disabled' : ''}
+            value="${a ? esc(a.chosen) : ''}">
+          ${a ? '' : '<button class="btn" onclick="answer(document.getElementById(\'spellIn\').value)">送出</button>'}
+        </div>`}
+
+    ${a ? `
+      <div class="fb ${a.ok ? 'ok' : 'ng'}">
+        <b>${a.ok ? '✅ 正確' : '❌ 答錯了'}</b>　正解：<b class="jp">${esc(w.word)}</b>
+        <span class="jp muted">${esc(w.phonetic || '')}</span>
+        <button class="spk" onclick="speak(${jsAttr(w.word)})">🔊</button>　${esc(w.pos || '')} ${esc(w.zh)}
+        ${w.example ? `<div style="margin-top:8px" class="jp">${esc(w.example)}</div>
+          <div class="muted">${esc(w.example_zh || '')}</div>` : ''}
+      </div>
+      <button class="btn" style="margin-top:14px" onclick="nextQ()">
+        ${quiz.i + 1 >= quiz.items.length ? '看成績' : '下一題'}</button>` : ''}`;
+
+  if(!a && !it.shown.opts){
+    const inp = $('#spellIn'); inp.focus();
+    inp.addEventListener('keydown', e => { if(e.key === 'Enter') answer(inp.value); });
+  }
+}
+
+function answer(chosen){
+  if(quiz.answered) return;
+  const it = quiz.items[quiz.i];
+  const ok = String(chosen).trim().toLowerCase() === String(it.shown.correct).trim().toLowerCase();
+  quiz.answered = { chosen, ok };
+  if(!ok) quiz.wrong.push(it.w);
+  grade(it.w.id, ok ? 'good' : 'again');   // 測驗結果同樣餵回間隔重複排程
+  render();
+}
+function nextQ(){ quiz.i++; quiz.answered = null; render(); }
+
+function renderQuizResult(box){
+  const total = quiz.items.length, wrong = quiz.wrong, right = total - wrong.length;
+  const pct = Math.round(right / total * 100);
+  box.innerHTML = `
+    <div class="card" style="text-align:center">
+      <div style="font-size:44px;font-weight:700;color:${pct >= 80 ? 'var(--ok)' : pct >= 60 ? 'var(--warn)' : 'var(--ng)'}">${pct} 分</div>
+      <div class="muted">答對 ${right} / ${total} 題</div>
+      <div class="row" style="justify-content:center;margin-top:16px">
+        <button class="btn" onclick="quiz=null;render()">再來一輪</button>
+        ${wrong.length ? '<button class="btn ghost" onclick="retryWrong()">只練這輪錯的（' + wrong.length + '）</button>' : ''}
+        <button class="btn ghost" onclick="quiz=null;go('dash')">回進度</button>
+      </div>
+    </div>
+    ${wrong.length ? `<h2 class="sec">這輪答錯的字</h2>
+      <div class="card"><table>
+        <thead><tr><th>單字</th><th>中文</th><th>例句</th></tr></thead>
+        <tbody>${wrong.map(w => `<tr>
+          <td class="jp"><b>${esc(w.word)}</b> <button class="spk" onclick="speak(${jsAttr(w.word)})">🔊</button></td>
+          <td>${esc(w.zh)}</td>
+          <td class="muted"><span class="jp">${esc(w.example || '')}</span><br>${esc(w.example_zh || '')}</td>
+        </tr>`).join('')}</tbody></table></div>` : ''}`;
+}
+function retryWrong(){
+  const items = quiz.wrong.map(w => ({ w, mode: MODES[Math.floor(Math.random()*MODES.length)].k }));
+  quiz = { items, i:0, wrong:[], answered:null };
+  render();
+}
+
+/* ==================================================================
+   10) 頁面：文法練習（JLPT 文法）
+   ================================================================== */
+let gramOpen = null;      // 目前展開說明的單元 id
+let gramSes  = null;      // 練習中的回合 {unit, items:[題號], i, wrong:[], answered}
+
+function gramStat(u){ return S.gram[u.id] || { tries:0, best:0, wrong:[] }; }
+
+function renderGram(box){
+  if(!GRAMMAR.length){
+    box.innerHTML = `<div class="card"><h3 style="margin-top:0">找不到文法題庫</h3>
+      <p class="muted">請確認 <code>data/grammar.js</code> 在資料夾裡，然後重新整理這一頁。</p></div>`;
+    return;
+  }
+  if(gramSes) return gramSes.i >= gramSes.items.length ? renderGramResult(box) : renderGramItem(box);
+
+  const doneCnt = GRAMMAR.filter(u => gramStat(u).tries > 0).length;
+  $('#pageSub').textContent = GRAMMAR.length + ' 個單元・已練 ' + doneCnt + ' 個';
+
+  box.innerHTML = GRAMMAR.map(u => {
+    const st = gramStat(u), open = gramOpen === u.id;
+    return `
+    <div class="card" style="margin-bottom:14px">
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:17px;font-weight:700">${esc(u.point)}
+            <span class="pill">${u.questions.length} 題</span>
+            ${st.tries ? `<span class="pill ${st.best >= 80 ? 'mastered' : 'learning'}">最佳 ${st.best} 分</span>` : ''}
+          </div>
+          <div class="muted" style="font-size:13.5px">${esc(u.subtitle)}</div>
+        </div>
+        <div class="row">
+          <button class="btn ghost sm" onclick="gramOpen=${open ? 'null' : jsAttr(u.id)};render()">
+            ${open ? '收起說明' : '看說明'}</button>
+          <button class="btn sm" onclick="startGram(${jsAttr(u.id)},false)">開始練習</button>
+          ${st.wrong.length ? `<button class="btn sm ghost" onclick="startGram(${jsAttr(u.id)},true)">
+            只練錯的（${st.wrong.length}）</button>` : ''}
+        </div>
+      </div>
+      ${open ? `<div class="hr"></div>
+        ${u.explain.map(e => `<div style="margin-bottom:10px">
+          <b>${esc(e.h)}</b><div class="muted">${esc(e.b)}</div></div>`).join('')}` : ''}
+    </div>`;
+  }).join('');
+}
+
+function startGram(uid, onlyWrong){
+  const u = GRAMMAR.find(x => x.id === uid);
+  if(!u) return;
+  const st = gramStat(u);
+  let idx = onlyWrong ? st.wrong.slice() : u.questions.map((_, i) => i);
+  if(!idx.length){ alert('這個單元沒有錯題。'); return; }
+  // full 記錄這回是不是「完整練整個單元」，只有完整練習才會更新最佳成績
+  gramSes = { unit:u, items: shuffle(idx), i:0, wrong:[], answered:null, full: !onlyWrong };
+  render(); window.scrollTo(0, 0);
+}
+
+/** 把題目的選項洗牌，並記住正解的文字（只算一次，作答後不會重排） */
+function buildGramQ(ses){
+  if(ses.shown) return ses.shown;
+  const q = ses.unit.questions[ses.items[ses.i]];
+  ses.shown = { q, correct: q.opts[q.ans], opts: shuffle(q.opts) };
+  return ses.shown;
+}
+
+function renderGramItem(box){
+  const ses = gramSes;
+  const { q, correct, opts } = buildGramQ(ses);
+  const a = ses.answered;
+  $('#pageSub').textContent = ses.unit.point;
+
+  box.innerHTML = `
+    <div class="row" style="justify-content:space-between">
+      <span class="muted">${esc(ses.unit.point)}　第 ${ses.i + 1} / ${ses.items.length} 題</span>
+      <span class="muted">答對 ${ses.i - ses.wrong.length} 題</span>
+    </div>
+    <div class="bar" style="margin:10px 0 18px"><i style="width:${ses.i / ses.items.length * 100}%"></i></div>
+
+    <div class="qstem small jp">${esc(q.stem)}</div>
+
+    ${opts.map(o => `
+      <button class="opt jp ${a ? (o === correct ? 'right' : (o === a.chosen ? 'wrong' : '')) : ''}"
+        ${a ? 'disabled' : ''} onclick="gramAnswer(${jsAttr(o)})">${esc(o)}</button>`).join('')}
+
+    ${a ? `
+      <div class="fb ${a.ok ? 'ok' : 'ng'}">
+        <b>${a.ok ? '✅ 正確' : '❌ 答錯了'}</b>　正解：<b class="jp">${esc(correct)}</b>
+        <div style="margin-top:8px">${esc(q.why)}</div>
+        <div class="hr"></div>
+        <div class="jp">${esc(q.stem.replace('______', correct))}
+          <button class="spk" onclick="speak(${jsAttr(q.stem.replace('______', correct))})">🔊</button></div>
+      </div>
+      <button class="btn" style="margin-top:14px" onclick="nextGram()">
+        ${ses.i + 1 >= ses.items.length ? '看成績' : '下一題'}</button>` : ''}`;
+}
+
+function gramAnswer(chosen){
+  const ses = gramSes;
+  if(ses.answered) return;
+  const ok = chosen === ses.shown.correct;
+  ses.answered = { chosen, ok };
+  if(!ok) ses.wrong.push(ses.items[ses.i]);
+  render();
+}
+function nextGram(){ gramSes.i++; gramSes.answered = null; gramSes.shown = null; render(); }
+
+function renderGramResult(box){
+  const ses = gramSes, u = ses.unit;
+  const total = ses.items.length, right = total - ses.wrong.length;
+  const pct = Math.round(right / total * 100);
+
+  // 記成績：答對的題目從錯題清單移除，答錯的加進去
+  const st = S.gram[u.id] || (S.gram[u.id] = { tries:0, best:0, wrong:[] });
+  st.tries++;
+  // 只有練完整個單元才算成績；「只練錯的」題數少，會讓分數虛高
+  if(ses.full) st.best = Math.max(st.best, pct);
+  const answered = ses.items;
+  st.wrong = st.wrong.filter(i => !answered.includes(i)).concat(ses.wrong);
+  save();
+
+  box.innerHTML = `
+    <div class="card" style="text-align:center">
+      <div class="muted">${esc(u.point)}</div>
+      <div style="font-size:44px;font-weight:700;color:${pct >= 80 ? 'var(--ok)' : pct >= 60 ? 'var(--warn)' : 'var(--ng)'}">${pct} 分</div>
+      <div class="muted">答對 ${right} / ${total} 題
+        ${ses.full ? '　最佳成績 ' + st.best + ' 分' : '（複習錯題，不計入最佳成績）'}</div>
+      <div class="row" style="justify-content:center;margin-top:16px">
+        ${ses.wrong.length ? `<button class="btn" onclick="gramSes=null;startGram(${jsAttr(u.id)},true)">
+          只練這次錯的（${ses.wrong.length}）</button>` : ''}
+        <button class="btn ghost" onclick="gramSes=null;gramOpen=${jsAttr(u.id)};render()">看這個單元的說明</button>
+        <button class="btn ghost" onclick="gramSes=null;render()">回單元列表</button>
+      </div>
+    </div>
+    ${ses.wrong.length ? `<h2 class="sec">這次答錯的題目</h2>
+      ${ses.wrong.map(i => { const q = u.questions[i]; return `
+        <div class="card" style="margin-bottom:10px">
+          <div class="jp">${esc(q.stem.replace('______', q.opts[q.ans]))}</div>
+          <div class="muted" style="margin-top:6px">正解 <b class="jp">${esc(q.opts[q.ans])}</b>　${esc(q.why)}</div>
+        </div>`; }).join('')}` : ''}`;
+}
+
+/* ==================================================================
+   11) 頁面：模擬測驗
+   ------------------------------------------------------------------
+   跟「測驗」「文法練習」最大的差別：作答過程中不給對錯。
+   限時、可以來回改答案、交卷後才一次公布成績與弱點分析。
+   ================================================================== */
+let mockSes = null;      // {items, i, answers, flags, limitSec, startMs, endMs, timerId, done}
+
+const MOCK_PRESETS = [
+  { k:'short', n:'短測驗',   q:50,  min:25 },
+  { k:'std',   n:'標準測驗', q:100, min:50 },
+  { k:'quick', n:'快測',     q:20,  min:10 },
+];
+
+function mockStopTimer(){
+  if(mockSes && mockSes.timerId){ clearInterval(mockSes.timerId); mockSes.timerId = null; }
+}
+function mmss(sec){
+  sec = Math.max(0, Math.round(sec));
+  return String(Math.floor(sec / 60)).padStart(2,'0') + ':' + String(sec % 60).padStart(2,'0');
+}
+
+function renderMock(box){
+  if(mockSes && !mockSes.done) return renderMockItem(box);
+  if(mockSes && mockSes.done)  return renderMockResult(box);
+  renderMockSetup(box);
+}
+
+function renderMockSetup(box){
+  const learned = WORDS.filter(w => S.progress[w.id]).length;
+  const hist = (S.mock || []).slice(-5).reverse();
+  const best = (S.mock || []).reduce((m, r) => Math.max(m, r.pct), 0);
+  $('#pageSub').textContent = (S.mock || []).length ? '考過 ' + S.mock.length + ' 次・最佳 ' + best + ' 分' : '還沒考過';
+
+  box.innerHTML = `
+    <div class="card">
+      <h3 style="margin-top:0">模擬測驗</h3>
+      <p class="muted" style="margin-top:4px">
+        限時作答、<b>過程中不給對錯</b>、可以來回改答案，交卷後才一次公布成績。
+        題目混合五種單字題型和文法題，接近 JLPT 言語知識的形式。</p>
+      <div class="grid g2" style="margin-top:14px">
+        <label>測驗規模<br>
+          <select id="mkPreset" style="width:100%;margin-top:6px">
+            ${MOCK_PRESETS.map(p => `<option value="${p.k}" ${p.k === 'std' ? 'selected' : ''}>
+              ${p.n}　${p.q} 題／${p.min} 分鐘</option>`).join('')}
+            <option value="none">標準 100 題／不限時</option>
+          </select></label>
+        <label>單字題與文法題的比例<br>
+          <select id="mkRatio" style="width:100%;margin-top:6px">
+            <option value="50" selected>各一半</option>
+            <option value="70">單字 70％</option>
+            <option value="30">單字 30％</option>
+            <option value="100">全部單字題</option>
+            <option value="0">全部文法題</option>
+          </select></label>
+        <label>單字題的出題範圍<br>
+          <select id="mkScope" style="width:100%;margin-top:6px">
+            <option value="learned" ${learned >= 40 ? 'selected' : ''}>只考學過的字（${learned}）</option>
+            <option value="all" ${learned < 40 ? 'selected' : ''}>全部字庫（${WORDS.length}）</option>
+          </select></label>
+      </div>
+      <button class="btn" style="margin-top:16px" onclick="startMock()">開始測驗</button>
+      <div class="fieldhint" style="margin-top:12px">
+        交卷後答錯的單字會自動進錯題本並回寫排程，答錯的文法題會留在該單元的「只練錯的」。
+      </div>
+    </div>
+
+    ${hist.length ? `<h2 class="sec">最近的成績</h2>
+      <div class="card"><table>
+        <thead><tr><th>日期</th><th>題數</th><th>答對</th><th>分數</th><th>用時</th></tr></thead>
+        <tbody>${hist.map(r => `<tr>
+          <td class="jp">${esc(r.date)}</td><td>${r.total}</td><td>${r.correct}</td>
+          <td><b style="color:${r.pct >= 80 ? 'var(--ok)' : r.pct >= 60 ? 'var(--warn)' : 'var(--ng)'}">${r.pct}</b></td>
+          <td class="muted">${mmss(r.sec)}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
+}
+
+/** 組題：單字題用現有的五種題型，文法題從 25 個單元隨機抽 */
+function startMock(){
+  mockStopTimer();    // 上一場沒交卷就離開的話，計時器還在跑，先收掉
+  const preset = MOCK_PRESETS.find(p => p.k === $('#mkPreset').value);
+  const total = preset ? preset.q : 100;
+  const limitSec = preset ? preset.min * 60 : 0;
+  const wordPct = +$('#mkRatio').value;
+  const scope = $('#mkScope').value;
+
+  let pool = scope === 'learned' ? WORDS.filter(w => S.progress[w.id]) : WORDS.slice();
+  if(pool.length < 4) pool = WORDS.slice();
+
+  const wantWord = Math.round(total * wordPct / 100);
+  const wantGram = total - wantWord;
+
+  const items = [];
+  pick(pool, Math.min(wantWord, pool.length)).forEach(w =>
+    items.push({ kind:'word', w, mode: MODES[Math.floor(Math.random() * MODES.length)].k }));
+
+  const allGram = GRAMMAR.flatMap(u => u.questions.map((q, qi) => ({ kind:'gram', unit:u, qi })));
+  pick(allGram, Math.min(wantGram, allGram.length)).forEach(g => items.push(g));
+
+  if(!items.length){ alert('題庫不足，無法開始測驗。'); return; }
+
+  mockSes = {
+    items: shuffle(items), i:0,
+    answers: new Array(items.length).fill(null),
+    flags:   new Array(items.length).fill(false),
+    limitSec, startMs: Date.now(), endMs: limitSec ? Date.now() + limitSec * 1000 : 0,
+    timerId: null, done:false
+  };
+  if(limitSec){
+    const ses = mockSes;                 // 綁住這一場，別讓舊的計時器管到新的考卷
+    ses.timerId = setInterval(() => {
+      if(mockSes !== ses || ses.done){ clearInterval(ses.timerId); ses.timerId = null; return; }
+      const left = (ses.endMs - Date.now()) / 1000;
+      const el = $('#mockClock');
+      if(el) el.textContent = mmss(left);
+      if(left <= 0) submitMock(true);
+    }, 500);
+  }
+  render(); window.scrollTo(0, 0);
+}
+
+/** 把一題的題幹與選項算出來並快取（跟練習模式共用 buildQuestion） */
+function buildMockQ(it){
+  if(it.kind === 'word') return buildQuestion(it);
+  if(it.shown) return it.shown;
+  const q = it.unit.questions[it.qi];
+  it.shown = { q, correct: q.opts[q.ans], opts: shuffle(q.opts), stem: esc(q.stem), small: true, mode: 'gram' };
+  return it.shown;
+}
+
+function mockAnswer(v){
+  mockSes.answers[mockSes.i] = v;
+  render();
+}
+function mockJump(n){
+  mockSes.i = Math.max(0, Math.min(mockSes.items.length - 1, n));
+  render(); window.scrollTo(0, 0);
+}
+function mockFlag(){
+  mockSes.flags[mockSes.i] = !mockSes.flags[mockSes.i];
+  render();
+}
+
+function renderMockItem(box){
+  const m = mockSes, it = m.items[m.i];
+  const sh = buildMockQ(it);
+  const answered = m.answers.filter(a => a !== null && a !== '').length;
+  const left = m.limitSec ? (m.endMs - Date.now()) / 1000 : null;
+  const label = it.kind === 'gram' ? '文法・' + it.unit.point
+    : MODES.find(x => x.k === sh.mode).n.split('（')[0];
+  $('#pageSub').textContent = '第 ' + (m.i + 1) + ' / ' + m.items.length + ' 題　已答 ' + answered + ' 題';
+
+  box.innerHTML = `
+    <div class="card" style="padding:12px 18px">
+      <div class="row" style="justify-content:space-between">
+        <span class="muted">第 ${m.i + 1} / ${m.items.length} 題　<span class="pill">${esc(label)}</span></span>
+        <span>${m.limitSec
+          ? '⏱ <b id="mockClock" class="jp" style="font-size:18px;color:' + (left < 300 ? 'var(--ng)' : 'var(--text)') + '">' + mmss(left) + '</b>'
+          : '<span class="muted">不限時</span>'}</span>
+      </div>
+      <div class="bar" style="margin-top:10px"><i style="width:${answered / m.items.length * 100}%"></i></div>
+    </div>
+
+    <div class="qstem ${sh.small ? 'small' : ''}" style="margin-top:18px">${sh.stem}</div>
+
+    ${sh.opts ? sh.opts.map(o => `
+      <button class="opt ${it.kind === 'gram' || sh.mode !== 'ja2zh' ? 'jp' : ''} ${m.answers[m.i] === o ? 'sel' : ''}"
+        onclick="mockAnswer(${jsAttr(o)})">${esc(o)}</button>`).join('')
+      : `<div class="row"><input id="mockSpell" type="text" class="jp" placeholder="輸入假名讀音"
+           autocomplete="off" style="flex:1;font-size:18px;padding:12px"
+           value="${esc(m.answers[m.i] || '')}"></div>`}
+
+    <div class="row" style="margin-top:18px;justify-content:space-between">
+      <div class="row">
+        <button class="btn ghost" ${m.i === 0 ? 'disabled' : ''} onclick="mockJump(${m.i - 1})">← 上一題</button>
+        <button class="btn ghost" ${m.i === m.items.length - 1 ? 'disabled' : ''} onclick="mockJump(${m.i + 1})">下一題 →</button>
+        <button class="btn ghost" onclick="mockFlag()">${m.flags[m.i] ? '🚩 已標記' : '⚐ 標記待確認'}</button>
+      </div>
+      <button class="btn warn" onclick="if(confirm('確定交卷？未作答的題目會算錯。')){submitMock(false)}">交卷</button>
+    </div>
+
+    <h2 class="sec">題號</h2>
+    <div class="card">
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${m.items.map((_, n) => {
+          const on = m.answers[n] !== null && m.answers[n] !== '';
+          const bg = n === m.i ? 'var(--brand)' : on ? 'var(--ok)' : 'transparent';
+          const fg = (n === m.i || on) ? '#fff' : 'var(--muted)';
+          return `<button onclick="mockJump(${n})" title="第 ${n + 1} 題"
+            style="width:34px;height:30px;border-radius:6px;cursor:pointer;font-size:12px;
+                   border:1px solid ${m.flags[n] ? 'var(--warn)' : 'var(--line)'};
+                   background:${bg};color:${fg};font-family:inherit">${n + 1}</button>`;
+        }).join('')}
+      </div>
+      <div class="muted" style="font-size:12.5px;margin-top:10px">
+        綠＝已答　藍＝目前這題　橘框＝標記待確認
+      </div>
+    </div>`;
+
+  if(!sh.opts){
+    const inp = $('#mockSpell');
+    inp.focus();
+    inp.addEventListener('input', e => { m.answers[m.i] = e.target.value; });
+    inp.addEventListener('keydown', e => {
+      if(e.key === 'Enter'){ m.answers[m.i] = inp.value; mockJump(m.i + 1); }
+    });
+  }
+}
+
+function submitMock(timeUp){
+  const m = mockSes;
+  mockStopTimer();
+  m.sec = Math.round((Date.now() - m.startMs) / 1000);
+  m.timeUp = !!timeUp;
+
+  const byType = {}, byUnit = {}, byTopic = {};
+  m.wrong = [];
+  let correct = 0;
+  muteSpeak = true;        // 沒被翻到的聽力題現在才算，別讓它一次唸一串
+  const t = today();
+  const h = S.hist[t] || (S.hist[t] = { new:0, rev:0 });
+
+  m.items.forEach((it, n) => {
+    const sh = buildMockQ(it);
+    const a = m.answers[n];
+    const ok = a != null && String(a).trim().toLowerCase() === String(sh.correct).trim().toLowerCase();
+    if(ok) correct++; else m.wrong.push(n);
+
+    const key = it.kind === 'gram' ? '文法：' + it.unit.point
+      : MODES.find(x => x.k === sh.mode).n.split('（')[0];
+    const r = byType[key] || (byType[key] = { ok:0, total:0 });
+    r.total++; if(ok) r.ok++;
+
+    if(it.kind === 'word'){
+      grade(it.w.id, ok ? 'good' : 'again', true);    // 回寫排程與錯題本（最後統一存檔）
+      (it.w.topic || []).forEach(tp => {
+        const s = byTopic[tp] || (byTopic[tp] = { ok:0, total:0 });
+        s.total++; if(ok) s.ok++;
+      });
+    }else{
+      h.rev++;
+      const g = S.gram[it.unit.id] || (S.gram[it.unit.id] = { tries:0, best:0, wrong:[] });
+      if(!ok && !g.wrong.includes(it.qi)) g.wrong.push(it.qi);
+      const s = byUnit[it.unit.point] || (byUnit[it.unit.point] = { ok:0, total:0 });
+      s.total++; if(ok) s.ok++;
+    }
+  });
+
+  muteSpeak = false;
+  m.correct = correct;
+  m.pct = Math.round(correct / m.items.length * 100);
+  m.byType = byType; m.byUnit = byUnit; m.byTopic = byTopic;
+  m.done = true;
+
+  S.mock = (S.mock || []).concat([{
+    date: t, total: m.items.length, correct, pct: m.pct, sec: m.sec, byType
+  }]).slice(-30);                                      // 只留最近 30 次
+
+  save(); refreshChrome(); render(); window.scrollTo(0, 0);
+}
+
+function renderMockResult(box){
+  const m = mockSes;
+  const color = m.pct >= 80 ? 'var(--ok)' : m.pct >= 60 ? 'var(--warn)' : 'var(--ng)';
+  const rows = o => Object.entries(o)
+    .map(([k, v]) => ({ k, v, r: v.ok / v.total }))
+    .sort((a, b) => a.r - b.r);
+  const bar = r => `<div class="bar" style="width:120px"><i style="width:${r * 100}%;
+    background:${r >= 0.8 ? 'var(--ok)' : r >= 0.6 ? 'var(--warn)' : 'var(--ng)'}"></i></div>`;
+  const weakUnits = rows(m.byUnit).filter(x => x.r < 0.8).slice(0, 5);
+  const weakTopics = rows(m.byTopic).filter(x => x.r < 0.8).slice(0, 5);
+  $('#pageSub').textContent = '測驗結果';
+
+  box.innerHTML = `
+    <div class="card" style="text-align:center">
+      ${m.timeUp ? '<div class="pill" style="border-color:var(--ng);color:var(--ng)">時間到，自動交卷</div>' : ''}
+      <div style="font-size:52px;font-weight:700;color:${color}">${m.pct} 分</div>
+      <div class="muted">答對 ${m.correct} / ${m.items.length} 題　用時 ${mmss(m.sec)}
+        ${m.items.length ? '　平均每題 ' + Math.round(m.sec / m.items.length) + ' 秒' : ''}</div>
+      <div class="row" style="justify-content:center;margin-top:16px">
+        ${m.wrong.length ? `<button class="btn" onclick="mockPracticeWrongWords()">只練這次錯的單字</button>` : ''}
+        <button class="btn ghost" onclick="mockSes=null;render()">再考一次</button>
+        <button class="btn ghost" onclick="mockSes=null;go('dash')">回進度</button>
+      </div>
+    </div>
+
+    <h2 class="sec">各題型正確率</h2>
+    <div class="card"><table><tbody>
+      ${rows(m.byType).map(x => `<tr>
+        <td>${esc(x.k)}</td>
+        <td style="width:130px">${bar(x.r)}</td>
+        <td style="text-align:right;white-space:nowrap">${x.v.ok} / ${x.v.total}</td></tr>`).join('')}
+    </tbody></table></div>
+
+    ${weakUnits.length ? `<h2 class="sec">要補強的文法單元</h2>
+      <div class="card"><table><tbody>
+        ${weakUnits.map(x => `<tr>
+          <td>${esc(x.k)}</td><td style="width:130px">${bar(x.r)}</td>
+          <td style="text-align:right">${x.v.ok} / ${x.v.total}</td>
+          <td style="text-align:right"><button class="btn sm ghost"
+            onclick="mockSes=null;gramOpen=${jsAttr((GRAMMAR.find(u => u.point === x.k) || {}).id || '')};go('gram')">看說明</button></td>
+        </tr>`).join('')}
+      </tbody></table></div>` : ''}
+
+    ${weakTopics.length ? `<h2 class="sec">要補強的單字主題</h2>
+      <div class="card"><table><tbody>
+        ${weakTopics.map(x => `<tr>
+          <td>${esc(x.k)}</td><td style="width:130px">${bar(x.r)}</td>
+          <td style="text-align:right">${x.v.ok} / ${x.v.total}</td>
+          <td style="text-align:right"><button class="btn sm ghost"
+            onclick="mockSes=null;libFilter={topic:${jsAttr(x.k)},level:'',st:'',star:false,q:'',deep:false};go('lib')">看這些字</button></td>
+        </tr>`).join('')}
+      </tbody></table></div>` : ''}
+
+    ${m.wrong.length ? `<h2 class="sec">答錯的題目（${m.wrong.length}）</h2>
+      ${m.wrong.slice(0, 40).map(n => {
+        const it = m.items[n], sh = buildMockQ(it), a = m.answers[n];
+        return `<div class="card" style="margin-bottom:10px">
+          <div class="jp">${it.kind === 'gram'
+            ? esc(it.unit.questions[it.qi].stem.replace('______', sh.correct))
+            : esc(it.w.word) + '　' + esc(it.w.zh)}</div>
+          <div class="muted" style="margin-top:6px">
+            你的答案：<b style="color:var(--ng)">${a ? esc(a) : '未作答'}</b>
+            正解：<b style="color:var(--ok)">${esc(sh.correct)}</b><br>
+            ${it.kind === 'gram' ? esc(it.unit.questions[it.qi].why)
+              : '<span class="jp">' + esc(it.w.example) + '</span><br>' + esc(it.w.example_zh)}
+          </div></div>`;
+      }).join('')}
+      ${m.wrong.length > 40 ? '<p class="muted">只列出前 40 題，其餘的字都已進錯題本。</p>' : ''}` : ''}`;
+}
+
+/** 把這次答錯的單字直接排成一輪測驗 */
+function mockPracticeWrongWords(){
+  const ws = mockSes.wrong.map(n => mockSes.items[n]).filter(it => it.kind === 'word').map(it => it.w);
+  if(!ws.length){ alert('這次答錯的都是文法題，到「文法練習」用「只練錯的」複習。'); return; }
+  mockSes = null;
+  quiz = { items: ws.map(w => ({ w, mode: MODES[Math.floor(Math.random() * MODES.length)].k })),
+           i:0, wrong:[], answered:null };
+  go('quiz');
+}
+
+/* ==================================================================
+   12) 頁面：錯題本
+   ================================================================== */
+function renderWrong(box){
+  const list = S.wrongIds.map(byId).filter(Boolean);
+  $('#pageSub').textContent = list.length + ' 個字';
+  if(!list.length){
+    box.innerHTML = '<div class="card"><h3 style="margin-top:0">錯題本是空的 👍</h3><p class="muted">答錯的字會自動收進這裡，連續答對到第 4 盒才會畢業。</p></div>';
+    return;
+  }
+  box.innerHTML = `
+    <div class="row" style="margin-bottom:14px">
+      <button class="btn" onclick="quizFromWrong()">只練錯題本</button>
+      <button class="btn ghost" onclick="if(confirm('清空錯題本？單字進度不會被清掉。')){S.wrongIds=[];save();refreshChrome();render();}">清空</button>
+    </div>
+    <div class="card"><table>
+      <thead><tr><th>單字</th><th>中文</th><th>例句（中英對照）</th><th style="text-align:right">錯 / 對</th></tr></thead>
+      <tbody>${list.map(w => { const p = S.progress[w.id] || {}; return `<tr>
+        <td class="jp" style="white-space:nowrap"><b>${esc(w.word)}</b>
+          <button class="spk" onclick="speak(${jsAttr(w.word)})">🔊</button>
+          <div class="muted jp" style="font-size:12px">${esc(w.phonetic || '')}</div></td>
+        <td>${esc(w.pos || '')} ${esc(w.zh)}</td>
+        <td class="muted"><span class="jp">${esc(w.example || '')}</span><br>${esc(w.example_zh || '')}</td>
+        <td style="text-align:right;white-space:nowrap"><span style="color:var(--ng)">${p.ng || 0}</span> / ${p.ok || 0}</td>
+      </tr>`; }).join('')}</tbody></table></div>`;
+}
+function quizFromWrong(){
+  const pool = S.wrongIds.map(byId).filter(Boolean);
+  quiz = { items: pick(pool, Math.min(S.cfg.quizLen, pool.length)).map(w => ({ w, mode: MODES[Math.floor(Math.random()*MODES.length)].k })), i:0, wrong:[], answered:null };
+  go('quiz');
+}
+
+/* ==================================================================
+   13) 頁面：字庫瀏覽
+   ================================================================== */
+let libFilter = { topic:'', level:'', st:'', star:false, q:'', deep:false };
+
+/** 把搜尋到的字反黃標示。先跳脫 HTML，再把關鍵字包上 <mark>。 */
+function hl(text, q){
+  const t = esc(text);
+  const key = String(q || '').trim();
+  if(!key) return t;
+  const rx = esc(key).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if(!rx) return t;
+  return t.replace(new RegExp(rx, 'gi'), m => '<mark>' + m + '</mark>');
+}
+
+function renderLib(box){
+  const topics = [...new Set(WORDS.flatMap(w => w.topic || []))].sort();
+  const f = libFilter;
+  const q = f.q.trim().toLowerCase();
+  const list = WORDS.filter(w => {
+    if(f.topic && !(w.topic || []).includes(f.topic)) return false;
+    if(f.level && (w.level || '') !== f.level) return false;
+    if(f.st && status(w) !== f.st) return false;
+    if(f.star && !(S.progress[w.id] || {}).star) return false;
+    if(!q) return true;
+    // 預設查表記＋假名＋羅馬字＋中文釋義；勾了「連例句一起搜」再加上日中例句
+    let hay = w.word + ' ' + (w.kana || '') + ' ' + (w.phonetic || '') + ' ' + w.zh + ' ' + (w.pos || '');
+    if(f.deep) hay += ' ' + (w.example || '') + ' ' + (w.example_zh || '');
+    return hay.toLowerCase().includes(q);
+  });
+  $('#pageSub').textContent = q
+    ? '搜尋「' + f.q.trim() + '」找到 ' + list.length + ' 字'
+    : list.length + ' / ' + WORDS.length + ' 字';
+
+  box.innerHTML = `
+    <div class="card">
+      <div class="row">
+        <input type="text" id="fq" placeholder="搜尋日文、假名或中文…（任何頁面按 / 都會跳來這裡）"
+          value="${esc(f.q)}" style="min-width:260px">
+        <select id="flevel"><option value="">全部級別</option>
+          ${['N5','N4','N3','N2','N1'].map(x => `<option ${f.level === x ? 'selected' : ''}>${x}</option>`).join('')}</select>
+        <select id="ftopic"><option value="">全部主題</option>
+          ${topics.map(t => `<option ${f.topic === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
+        <select id="fst"><option value="">全部狀態</option>
+          ${Object.entries(STATUS_TXT).map(([k,v]) => `<option value="${k}" ${f.st === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
+        <label class="row" style="gap:5px"><input type="checkbox" id="fstar" ${f.star ? 'checked' : ''}> 只看★重點</label>
+        <label class="row" style="gap:5px"><input type="checkbox" id="fdeep" ${f.deep ? 'checked' : ''}> 連例句一起搜</label>
+        <button class="btn sm ghost" onclick="libFilter={topic:'',level:'',st:'',star:false,q:'',deep:false};render()">清除</button>
+      </div>
+      ${q && !list.length ? `<div class="fieldhint" style="margin-top:10px">
+        找不到「${esc(f.q.trim())}」。試試看：勾「連例句一起搜」擴大範圍、
+        清掉其他篩選條件、或者到「新增單字」自己把這個字加進去。</div>` : ''}
+    </div>
+    <div class="card" style="margin-top:14px;overflow-x:auto"><table>
+      <thead><tr><th>★</th><th>表記／假名</th><th>中文</th><th>例句（日中對照）</th><th>級別・主題</th><th>狀態</th></tr></thead>
+      <tbody>${list.slice(0, 400).map(w => { const p = S.progress[w.id] || {}; const st = status(w); return `<tr>
+        <td><button class="spk" onclick="star(${w.id})">${p.star ? '★' : '☆'}</button></td>
+        <td class="jp" style="white-space:nowrap"><b>${hl(w.word, f.q)}</b>
+          <button class="spk" onclick="speak(${jsAttr(w.kana || w.word)})">🔊</button>
+          <div class="muted jp" style="font-size:12px">${hl(w.kana || '', f.q)}　${esc(w.phonetic || '')} ${esc(w.pos || '')}</div></td>
+        <td>${hl(w.zh, f.q)}</td>
+        <td class="muted" style="min-width:260px"><span class="jp">${f.deep ? hl(w.example || '', f.q) : esc(w.example || '')}</span><br>${f.deep ? hl(w.example_zh || '', f.q) : esc(w.example_zh || '')}</td>
+        <td>${w.level ? '<span class="pill" style="border-color:var(--brand);color:var(--brand)">' + esc(w.level) + '</span> ' : ''}${(w.topic || []).map(t => '<span class="pill">' + esc(t) + '</span>').join(' ')}
+          ${w.custom ? '<span class="pill">自訂</span>' : ''}</td>
+        <td><span class="pill ${st}">${STATUS_TXT[st]}${st === 'learning' ? ' ' + p.box + '/5' : ''}</span>
+          ${w.custom ? `<button class="btn sm ghost" style="margin-left:6px"
+            onclick="editingCid=${w.id - CUSTOM_ID_BASE};go('add')">編輯</button>` : ''}</td>
+      </tr>`; }).join('')}</tbody></table>
+      ${list.length > 400 ? '<p class="muted">只顯示前 400 筆，請用篩選縮小範圍。</p>' : ''}
+    </div>`;
+
+  // 邊打邊篩選；render() 會重建輸入框，所以要把游標位置放回去
+  $('#fq').addEventListener('input', e => {
+    const pos = e.target.selectionStart;
+    libFilter.q = e.target.value;
+    render();
+    const n = $('#fq');
+    n.focus();
+    try{ n.setSelectionRange(pos, pos); }catch(err){}
+  });
+  $('#fdeep').addEventListener('change', e => { libFilter.deep = e.target.checked; render(); });
+  $('#flevel').addEventListener('change', e => { libFilter.level = e.target.value; render(); });
+  $('#ftopic').addEventListener('change', e => { libFilter.topic = e.target.value; render(); });
+  $('#fst').addEventListener('change', e => { libFilter.st = e.target.value; render(); });
+  $('#fstar').addEventListener('change', e => { libFilter.star = e.target.checked; render(); });
+}
+
+/* ==================================================================
+   14) 頁面：新增單字（自己在網頁上加，存在瀏覽器裡）
+   ================================================================== */
+let editingCid = null;   // null＝新增模式；有值＝正在編輯那個自訂單字
+
+function renderAdd(box){
+  const topics = [...new Set(BASE_WORDS.concat(S.custom).flatMap(w => w.topic || []))].sort();
+  const ed = editingCid == null ? null : S.custom.find(c => c.cid === editingCid);
+  const v = ed || { word:'', kana:'', level:'', pos:'', phonetic:'', zh:'', example:'', example_zh:'', topic:[] };
+  const POS = ['名詞','動詞(五段)','動詞(一段)','動詞(不規則)','い形容詞','な形容詞','副詞','助詞','接続詞','表現'];
+  const LEVELS = ['N5','N4','N3','N2','N1'];
+  $('#pageSub').textContent = '自己新增 ' + S.custom.length + ' 字';
+
+  box.innerHTML = `
+    <div class="card">
+      <h3 style="margin-top:0">${ed ? '編輯單字：' + esc(ed.word) : '新增一個單字'}</h3>
+      <div class="grid g2" style="margin-top:12px">
+        <label><b>日文表記</b> <span style="color:var(--ng)">*</span>
+          <span class="pill">word</span>
+          <div class="fieldhint">單字卡正面顯示的字。有漢字就寫漢字（会議），純假名的字直接寫假名（たべる）。</div>
+          <input id="aWord" type="text" class="jp" value="${esc(v.word)}"
+            placeholder="会議" style="width:100%;margin-top:6px" autocomplete="off"></label>
+
+        <label><b>假名讀音</b> <span style="color:var(--ng)">*</span>
+          <span class="pill">kana</span>
+          <div class="fieldhint">漢字上面的注音（ruby）、🔊 唸出來的內容、「拼假名」題的答案。只能填平假名或片假名。</div>
+          <input id="aKana" type="text" class="jp" value="${esc(v.kana || '')}"
+            placeholder="かいぎ" style="width:100%;margin-top:6px" autocomplete="off"></label>
+
+        <label><b>中文釋義</b> <span style="color:var(--ng)">*</span>
+          <span class="pill">zh</span>
+          <div class="fieldhint">單字卡的背面、「日選中」的正解、「中選日」和「拼假名」題的題目。多個意思用分號隔開。</div>
+          <input id="aZh" type="text" value="${esc(v.zh)}"
+            placeholder="取得；收購" style="width:100%;margin-top:6px"></label>
+
+        <label><b>詞性</b> <span class="pill">pos</span>
+          <div class="fieldhint">顯示在音標旁邊。另外出四選一時，會優先挑同詞性的字當干擾選項，題目才有難度。</div>
+          <select id="aPos" style="width:100%;margin-top:6px">
+            <option value="">（不填）</option>
+            ${POS.map(p => `<option ${v.pos === p ? 'selected' : ''}>${p}</option>`).join('')}
+          </select></label>
+
+        <label><b>羅馬字</b> <span class="pill">phonetic</span>
+          <div class="fieldhint">顯示在單字下方，給你對照發音用，不影響出題。可以不填。
+            <b>這裡不放高低重音</b> —— 寧可不給，也不要給不可靠的資料。</div>
+          <input id="aPh" type="text" class="jp" value="${esc(v.phonetic)}"
+            placeholder="kaigi" style="width:100%;margin-top:6px"></label>
+
+        <label><b>JLPT 級別</b> <span class="pill">level</span>
+          <div class="fieldhint">「字庫瀏覽」和測驗「出題範圍」都可以只挑某一級來練。</div>
+          <select id="aLevel" style="width:100%;margin-top:6px">
+            <option value="">（不填）</option>
+            ${LEVELS.map(x => `<option ${v.level === x ? 'selected' : ''}>${x}</option>`).join('')}
+          </select></label>
+
+        <label style="grid-column:1/-1"><b>日文例句</b> <span class="pill">example</span>
+          <div class="fieldhint"><b>強烈建議填。</b>克漏字題型就是把這句裡的單字挖掉當題目 ——
+            沒填的話這個字永遠不會出克漏字。句中一定要出現這個字，<b>活用形也可以</b>（例如
+            詞條寫「始まる」，句子寫「始まります」也挖得到）。</div>
+          <input id="aEx" type="text" class="jp" value="${esc(v.example)}"
+            placeholder="来週の会議は九時に始まります。"
+            style="width:100%;margin-top:6px"></label>
+
+        <label style="grid-column:1/-1"><b>例句中文翻譯</b> <span class="pill">example_zh</span>
+          <div class="fieldhint">翻牌和答題回饋時顯示在日文例句下面，做日中對照用。</div>
+          <input id="aExZh" type="text" value="${esc(v.example_zh)}"
+            placeholder="下週的會議九點開始。" style="width:100%;margin-top:6px"></label>
+
+        <label><b>主題</b> <span class="pill">topic</span>
+          <div class="fieldhint">「字庫瀏覽」的篩選條件，也是測驗「出題範圍」的選項之一。
+            多個主題用「、」隔開。可以直接選現有主題，也可以打新的。</div>
+          <input id="aTopic" type="text" list="topicList" value="${esc((v.topic || []).join('、'))}"
+            placeholder="日常生活" style="width:100%;margin-top:6px">
+          <datalist id="topicList">${topics.map(t => `<option>${esc(t)}</option>`).join('')}</datalist></label>
+      </div>
+      <div class="muted" style="font-size:12.5px;margin-top:12px">
+        灰色標籤（<span class="pill">word</span> 之類）是這個欄位在 <code>data/words.js</code>
+        裡的名稱，跟 Python 產生器輸出的欄位是同一套。
+      </div>
+      <div class="row" style="margin-top:16px">
+        <button class="btn" onclick="saveWord()">${ed ? '儲存修改' : '加入字庫'}</button>
+        ${ed ? '<button class="btn ghost" onclick="editingCid=null;render()">取消編輯</button>' : ''}
+        <span class="muted" style="font-size:13px">加入後會排進今天的單字卡佇列</span>
+      </div>
+    </div>
+
+    <h2 class="sec">一次貼一堆</h2>
+    <div class="card">
+      <p class="muted" style="margin-top:0">一行一個字，欄位順序：
+        <code>表記　假名　中文　例句　例句翻譯　主題</code>。<br>
+        用 <b>Tab</b> 分隔（從 Excel 直接複製過來就是 Tab）；沒有 Tab 的話會用逗號分隔。
+        後面三個欄位可以省略。</p>
+      <textarea id="aBulk" rows="6" placeholder="会議	かいぎ	會議	来週の会議は九時に始まります。	下週的會議九點開始。	仕事
+時間	じかん	時間			日常生活"
+        style="width:100%;font-family:Consolas,monospace;font-size:13px;padding:10px;
+               background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:8px"></textarea>
+      <button class="btn" style="margin-top:10px" onclick="bulkAdd()">批次加入</button>
+    </div>
+
+    <h2 class="sec">我新增的單字（${S.custom.length}）</h2>
+    <div class="card">
+      ${S.custom.length ? `
+        <div class="row" style="margin-bottom:12px">
+          <button class="btn ghost sm" onclick="expCustomCsv()">匯出成 CSV</button>
+          <span class="muted" style="font-size:12.5px">
+            匯出後可以貼進 <code>data/wordlist.csv</code>，之後就會變成正式字庫的一部分。</span>
+        </div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>表記／假名</th><th>中文</th><th>例句</th><th>主題</th><th></th></tr></thead>
+          <tbody>${S.custom.slice().reverse().map(c => `<tr>
+            <td class="jp" style="white-space:nowrap"><b>${ruby(c)}</b>
+              <button class="spk" onclick="speak(${jsAttr(c.kana || c.word)})">🔊</button>
+              <div class="muted jp" style="font-size:12px">${esc(c.phonetic || '')} ${esc(c.pos || '')} ${esc(c.level || '')}</div></td>
+            <td>${esc(c.zh)}</td>
+            <td class="muted"><span class="jp">${esc(c.example || '')}</span><br>${esc(c.example_zh || '')}</td>
+            <td>${(c.topic || []).map(t => '<span class="pill">' + esc(t) + '</span>').join(' ')}</td>
+            <td style="white-space:nowrap">
+              <button class="btn sm ghost" onclick="editingCid=${c.cid};render();window.scrollTo(0,0)">編輯</button>
+              <button class="btn sm ghost" onclick="delCustom(${c.cid})">刪除</button></td>
+          </tr>`).join('')}</tbody></table></div>`
+      : '<span class="muted">還沒有自己新增的單字。</span>'}
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <b>⚠ 這些字存在瀏覽器裡</b>
+      <p class="muted" style="margin-bottom:0">清瀏覽器資料或換裝置就會不見。長期要保留的字，
+        請「匯出成 CSV」貼進 <code>data/wordlist.csv</code>，或到「設定」匯出進度備份。</p>
+    </div>`;
+}
+
+/** 檢查這個字是不是已經在字庫裡了 */
+function findDup(word, exceptCid){
+  const k = word.trim().toLowerCase();   // 日文沒有大小寫，這裡照舊不影響
+  const inBase = BASE_WORDS.find(w => w.word.toLowerCase() === k);
+  if(inBase) return '字庫裡已經有「' + inBase.word + '」了';
+  const inCustom = S.custom.find(c => c.word.toLowerCase() === k && c.cid !== exceptCid);
+  if(inCustom) return '你已經新增過「' + inCustom.word + '」了';
+  return null;
+}
+function parseTopic(s){
+  return String(s || '').split(/[、,，\/|\s]+/).map(x => x.trim()).filter(Boolean);
+}
+
+function saveWord(){
+  const word = $('#aWord').value.trim(), kana = $('#aKana').value.trim(), zh = $('#aZh').value.trim();
+  if(!word || !kana || !zh){ alert('日文表記、假名讀音、中文釋義三個都是必填的。'); return; }
+  // 表記可以是漢字＋假名（食べる）、純假名（たべる）、片假名（パソコン）
+  if(!/^[぀-ヿ㐀-鿿々〇ー]+$/.test(word)){ alert('日文表記只能填假名和漢字。'); return; }
+  if(!isKana(kana)){ alert('假名讀音只能填平假名或片假名（例：かいぎ）。'); return; }
+
+  const dup = findDup(word, editingCid);
+  if(dup && !confirm(dup + '，還是要繼續嗎？')) return;
+
+  const data = {
+    word, kana, zh,
+    level: $('#aLevel').value,
+    pos: $('#aPos').value,
+    phonetic: $('#aPh').value.trim(),
+    example: $('#aEx').value.trim(),
+    example_zh: $('#aExZh').value.trim(),
+    topic: parseTopic($('#aTopic').value),
+  };
+
+  if(editingCid != null){
+    Object.assign(S.custom.find(c => c.cid === editingCid), data);
+    editingCid = null;
+  }else{
+    S.custom.push({ cid: S.nextCid++, ...data });
+  }
+  save(); rebuildWords(); refreshChrome(); render();
+}
+
+function bulkAdd(){
+  const lines = $('#aBulk').value.split('\n').map(l => l.trim()).filter(Boolean);
+  if(!lines.length){ alert('先貼上內容。'); return; }
+  let added = 0, skipped = [];
+
+  lines.forEach(line => {
+    const f = (line.includes('\t') ? line.split('\t') : line.split(',')).map(x => x.trim());
+    const [word, kana, zh, example, example_zh, topic] = f;
+    if(!word || !kana || !zh){ skipped.push(line.slice(0, 20) + '（表記/假名/中文缺一）'); return; }
+    if(!isKana(kana)){ skipped.push(word + '（第二欄要填假名）'); return; }
+    if(findDup(word, null)){ skipped.push(word + '（重複）'); return; }
+    S.custom.push({
+      cid: S.nextCid++, word, kana, zh, level:'', pos:'', phonetic:'',
+      example: example || '', example_zh: example_zh || '', topic: parseTopic(topic),
+    });
+    added++;
+  });
+
+  save(); rebuildWords(); refreshChrome(); render();
+  alert('加入 ' + added + ' 個字' + (skipped.length ? '\n跳過 ' + skipped.length + ' 行：\n' + skipped.slice(0,10).join('\n') : ''));
+}
+
+function delCustom(cid){
+  const c = S.custom.find(x => x.cid === cid);
+  if(!c || !confirm('刪除「' + c.word + '」？這個字的學習進度也會一起刪掉。')) return;
+  S.custom = S.custom.filter(x => x.cid !== cid);
+  const id = CUSTOM_ID_BASE + cid;
+  delete S.progress[id];
+  S.wrongIds = S.wrongIds.filter(x => x !== id);
+  cardQueue = cardQueue.filter(w => w.id !== id);
+  save(); rebuildWords(); refreshChrome(); render();
+}
+
+function expCustomCsv(){
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const rows = [['word','kana','level','topic','pos','phonetic','zh','example','example_zh']];
+  S.custom.forEach(c => rows.push([c.word, c.kana || '', c.level || '', (c.topic || []).join('/'),
+    c.pos, c.phonetic, c.zh, c.example, c.example_zh].map(q)));
+  download('my-words-' + today() + '.csv', '\ufeff' + rows.map(r => r.join(',')).join('\r\n'), 'text/csv');
+}
+
+/* ==================================================================
+   15) 頁面：設定
+   ================================================================== */
+function renderSettings(box){
+  box.innerHTML = `
+    <div class="card">
+      <h3 style="margin-top:0">學習設定</h3>
+      <div class="grid g2" style="margin-top:12px">
+        <label>每天最多學幾個新字<br>
+          <input type="number" id="cNew" min="0" max="100" value="${S.cfg.newPerDay}" style="width:100%;margin-top:6px"></label>
+        <label>每日目標題數<br>
+          <input type="number" id="cGoal" min="5" max="300" value="${S.cfg.dailyGoal}" style="width:100%;margin-top:6px"></label>
+      </div>
+      <button class="btn" style="margin-top:14px" onclick="saveCfg()">儲存</button>
+    </div>
+
+    <h2 class="sec">備份與資料</h2>
+    <div class="card">
+      <p class="muted" style="margin-top:0">
+        <b>進度只存在「這一個瀏覽器」裡。</b>換瀏覽器、換裝置、清瀏覽器資料、用無痕視窗，
+        看到的都會是全新的空白進度 —— 包含你自己新增的單字。<br>
+        唯一的搬移方式就是下面的匯出／匯入。</p>
+      <div class="row">
+        <button class="btn" onclick="expJson()">⬇ 匯出備份（.json）</button>
+        <button class="btn ghost" onclick="pickImport('merge')">⬆ 匯入並合併</button>
+        <button class="btn ghost" onclick="pickImport('replace')">⬆ 匯入並取代</button>
+        <button class="btn ghost" onclick="expCsv()">匯出字庫＋進度（.csv）</button>
+        <input type="file" id="impFile" accept=".json" hidden onchange="impJson(this)">
+      </div>
+      <div class="fieldhint" style="margin-top:10px">
+        <b>合併</b>：把備份檔併進目前的進度 —— 盒子取比較高的、複習日取比較晚的、
+        自訂單字自動去重。電腦和手機各練各的之後可以用這個合起來。<br>
+        <b>取代</b>：整份蓋掉目前的進度，換新裝置第一次匯入時用這個。
+      </div>
+      <div class="muted" style="font-size:12.5px;margin-top:10px">
+        上次備份：${S.lastBackup
+          ? esc(S.lastBackup.slice(0, 10)) + '（' + (daysSinceBackup() === 0 ? '今天' : daysSinceBackup() + ' 天前') + '）'
+          : '<b style="color:var(--ng)">從來沒有備份過</b>'}
+      </div>
+      <div class="hr"></div>
+      <button class="btn ng" onclick="resetProgress()">清空所有學習進度</button>
+      <span class="muted" style="font-size:12.5px">（自己新增的單字會保留）</span>
+    </div>
+
+    <h2 class="sec">關於字庫</h2>
+    <div class="card">
+      <p style="margin-top:0">目前共 <b>${WORDS.length}</b> 個單字
+        ＝ <code>data/words.js</code> 的 ${BASE_WORDS.length} 字
+        ＋ 自己新增的 ${S.custom.length} 字。</p>
+      <p class="muted">要大量增減字庫，請編輯 <code>data/wordlist.csv</code> 後重新執行
+        <code class="jp">python gen_words.py</code>，程式碼完全不用改；
+        臨時想加幾個字就用 <button class="btn sm ghost" onclick="go('add')">新增單字</button>。</p>
+    </div>`;
+}
+/** 只清學習進度，自己新增的單字和設定保留 */
+function resetProgress(){
+  if(!confirm('確定清空所有學習進度？此動作無法還原。\n（自己新增的單字會保留）')) return;
+  S.progress = {}; S.wrongIds = []; S.hist = {}; S.streak = 0; S.lastDay = '';
+  S.gram = {};
+  cardQueue = []; quiz = null; gramSes = null;
+  save(); refreshChrome(); render();
+}
+function saveCfg(){
+  S.cfg.newPerDay = Math.max(0, +$('#cNew').value || 0);
+  S.cfg.dailyGoal = Math.max(5, +$('#cGoal').value || 20);
+  save(); refreshChrome(); alert('已儲存');
+}
+function download(name, text, type){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name; a.click(); URL.revokeObjectURL(a.href);
+}
+function expJson(){
+  S.lastBackup = new Date().toISOString();
+  save();
+  download('vocab-backup-' + today() + '.json', JSON.stringify(S, null, 2), 'application/json');
+  refreshChrome();
+}
+
+/** 距離上次備份幾天；從來沒備份過回傳 null */
+function daysSinceBackup(){
+  if(!S.lastBackup) return null;
+  const d = Math.floor((Date.now() - Date.parse(S.lastBackup)) / 86400000);
+  return isNaN(d) ? null : d;
+}
+/** 有東西可以掉，而且太久沒備份 → 該提醒了 */
+function needsBackup(){
+  const has = S.custom.length || Object.keys(S.progress).length || Object.keys(S.gram).length;
+  if(!has) return false;
+  const d = daysSinceBackup();
+  return d === null || d >= 7;
+}
+
+/* ------------------------------------------------------------------
+   合併匯入：把備份檔的內容「併進」目前的進度，而不是整個蓋掉。
+   這樣電腦練的和手機練的可以合在一起。
+   ------------------------------------------------------------------ */
+function mergeState(a, b){
+  b = b || {};
+
+  // 1) 自訂單字先合併，並記下 cid 的對照（因為兩邊的 cid 可能撞號）
+  const cidMap = {};
+  const haveWord = {};
+  (a.custom || []).forEach(c => haveWord[c.word.toLowerCase()] = c.cid);
+  (b.custom || []).forEach(c => {
+    const k = c.word.toLowerCase();
+    if(haveWord[k] != null){ cidMap[c.cid] = haveWord[k]; return; }   // 同一個字，沿用本機的 cid
+    const nc = a.nextCid++;
+    cidMap[c.cid] = nc;
+    a.custom.push(Object.assign({}, c, { cid: nc }));
+    haveWord[k] = nc;
+  });
+
+  // 2) 把對方 progress 裡的自訂單字 id 換成新的 cid
+  const bp = {};
+  Object.keys(b.progress || {}).forEach(id => {
+    const n = +id;
+    const key = (n >= CUSTOM_ID_BASE && cidMap[n - CUSTOM_ID_BASE] != null)
+      ? CUSTOM_ID_BASE + cidMap[n - CUSTOM_ID_BASE] : n;
+    bp[key] = b.progress[id];
+  });
+
+  // 3) 單字進度：盒子取高的、下次複習日取晚的、第一次學的日期取早的、次數相加
+  Object.keys(bp).forEach(id => {
+    const p = bp[id], cur = a.progress[id];
+    if(!cur){ a.progress[id] = Object.assign({}, p); return; }
+    cur.box   = Math.max(cur.box || 1, p.box || 1);
+    cur.interval = Math.max(cur.interval || 0, p.interval || 0);
+    cur.reps  = Math.max(cur.reps || 0, p.reps || 0);
+    cur.ease  = Math.max(cur.ease || EASE_START, p.ease || EASE_START);
+    cur.due   = (cur.due || '') > (p.due || '') ? cur.due : p.due;
+    cur.first = (cur.first && p.first) ? (cur.first < p.first ? cur.first : p.first) : (cur.first || p.first);
+    cur.star  = !!(cur.star || p.star);
+    cur.seen  = (cur.seen || 0) + (p.seen || 0);
+    cur.ok    = (cur.ok || 0) + (p.ok || 0);
+    cur.ng    = (cur.ng || 0) + (p.ng || 0);
+  });
+
+  // 4) 錯題本聯集，但已經練到第 4 盒的就不用再收進來
+  const wrong = new Set(a.wrongIds);
+  (b.wrongIds || []).forEach(id => {
+    const n = (id >= CUSTOM_ID_BASE && cidMap[id - CUSTOM_ID_BASE] != null)
+      ? CUSTOM_ID_BASE + cidMap[id - CUSTOM_ID_BASE] : id;
+    wrong.add(n);
+  });
+  a.wrongIds = [...wrong].filter(id => (a.progress[id] || {}).box < 4);
+
+  // 5) 每日紀錄取「較大值」而不是相加，重複匯入同一個檔才不會灌水
+  Object.entries(b.hist || {}).forEach(([d, r]) => {
+    const cur = a.hist[d] || (a.hist[d] = { new:0, rev:0 });
+    cur.new = Math.max(cur.new || 0, r.new || 0);
+    cur.rev = Math.max(cur.rev || 0, r.rev || 0);
+  });
+
+  // 6) 連續天數取大的、最後學習日取晚的
+  a.streak  = Math.max(a.streak || 0, b.streak || 0);
+  a.lastDay = (a.lastDay || '') > (b.lastDay || '') ? a.lastDay : (b.lastDay || '');
+
+  // 7) 文法成績：最佳分數取高的、次數相加、錯題聯集
+  Object.entries(b.gram || {}).forEach(([uid, g]) => {
+    const cur = a.gram[uid] || (a.gram[uid] = { tries:0, best:0, wrong:[] });
+    cur.best  = Math.max(cur.best || 0, g.best || 0);
+    cur.tries = (cur.tries || 0) + (g.tries || 0);
+    cur.wrong = [...new Set([...(cur.wrong || []), ...(g.wrong || [])])];
+  });
+
+  return a;
+}
+
+let importMode = 'replace';       // 'replace' 取代 ｜ 'merge' 合併
+function pickImport(mode){
+  importMode = mode;
+  $('#impFile').value = '';       // 讓同一個檔案可以再選一次
+  $('#impFile').click();
+}
+function impJson(el){
+  const f = el.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const data = JSON.parse(r.result);
+      if(importMode === 'merge'){
+        const before = Object.keys(S.progress).length, bc = S.custom.length;
+        S = mergeState(S, data);
+        alert('合併完成\n單字進度：' + before + ' → ' + Object.keys(S.progress).length + ' 筆'
+            + '\n自訂單字：' + bc + ' → ' + S.custom.length + ' 個');
+      }else{
+        S = Object.assign(defaultState(), data);
+        alert('已用備份檔取代目前的進度');
+      }
+      save(); rebuildWords(); refreshChrome(); render();
+    }catch(e){ alert('檔案格式不對：' + e.message); }
+  };
+  r.readAsText(f);
+}
+function expCsv(){
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const rows = [['word','pos','phonetic','zh','example','example_zh','topic','status','box','due','star','ok','ng']];
+  WORDS.forEach(w => { const p = S.progress[w.id] || {}; rows.push([
+    w.word, w.pos, w.phonetic, w.zh, w.example, w.example_zh, (w.topic || []).join('/'),
+    STATUS_TXT[status(w)], p.box || '', p.due || '', p.star ? '★' : '', p.ok || 0, p.ng || 0 ].map(q)); });
+  download('vocab-' + today() + '.csv', '\ufeff' + rows.map(r => r.join(',')).join('\r\n'), 'text/csv');
+}
+
+/* ==================================================================
+   11) 頁面：活用練習（日文版獨有）
+   ------------------------------------------------------------------
+   英文的 acquire → acquired 用字根切片就解決了；日文的
+   食べる → 食べます／食べて／食べた／食べない 是一整套規則，
+   而且是日文學習者真正天天在練的東西，所以獨立成一個模組。
+
+   關鍵設計：干擾選項是「用錯的規則算出來的」，不是手寫的。
+   例如 書く 的て形，正解是「書いて」，干擾選項就用其他組的規則算：
+   書きて（直接接て）、書って（う・つ・る 組）、書んで（む・ぶ・ぬ 組）——
+   剛好就是初學者最常犯的三種錯。所以這個題庫是 0 筆手寫內容。
+   ================================================================== */
+
+/* 五段動詞：看辭書形最後一個假名決定怎麼變 */
+const GODAN = {
+  'う': { masu:'います', te:'って', ta:'った', nai:'わない' },
+  'つ': { masu:'ちます', te:'って', ta:'った', nai:'たない' },
+  'る': { masu:'ります', te:'って', ta:'った', nai:'らない' },
+  'む': { masu:'みます', te:'んで', ta:'んだ', nai:'まない' },
+  'ぶ': { masu:'びます', te:'んで', ta:'んだ', nai:'ばない' },
+  'ぬ': { masu:'にます', te:'んで', ta:'んだ', nai:'なない' },
+  'く': { masu:'きます', te:'いて', ta:'いた', nai:'かない' },
+  'ぐ': { masu:'ぎます', te:'いで', ta:'いだ', nai:'がない' },
+  'す': { masu:'します', te:'して', ta:'した', nai:'さない' },
+};
+const ICHIDAN = { masu:'ます', te:'て', ta:'た', nai:'ない' };   // 一段：る 直接換掉
+const IADJ    = { masu:'いです', te:'くて', ta:'かった', nai:'くない' };
+const IRREG   = {                                               // 不規則只有這幾個
+  'する': { masu:'します', te:'して', ta:'した', nai:'しない' },
+  '来る': { masu:'来ます', te:'来て', ta:'来た', nai:'来ない' },
+  'くる': { masu:'きます', te:'きて', ta:'きた', nai:'こない' },
+  // ある 只有ない形特殊：不是「あらない」而是「ない」，是最常見的陷阱之一
+  'ある': { masu:'あります', te:'あって', ta:'あった', nai:'ない' },
+};
+// 〜ずる 是サ變的文語形（応ずる・信ずる・論ずる…），現代口語多寫成〜じる。
+// 活用走「ずる → じ＋」：応ずる→応じます／応じて／応じた／応じない
+const ZURU    = { masu:'じます', te:'じて', ta:'じた', nai:'じない' };
+
+// ラ行特殊五段（敬語四兄弟）：只有ます形例外 —— 是「いらっしゃいます」不是「いらっしゃります」。
+// て形／た形／ない形都照普通五段る行走（〜って／〜った／〜らない），所以只需要蓋掉 masu。
+const KEIGO_RA = {
+  'いらっしゃる': { masu:'いらっしゃいます', te:'いらっしゃって', ta:'いらっしゃった', nai:'いらっしゃらない' },
+  'なさる':       { masu:'なさいます',       te:'なさって',       ta:'なさった',       nai:'なさらない' },
+  'くださる':     { masu:'くださいます',     te:'くださって',     ta:'くださった',     nai:'くださらない' },
+  'おっしゃる':   { masu:'おっしゃいます',   te:'おっしゃって',   ta:'おっしゃった',   nai:'おっしゃらない' },
+};
+
+const CONJ_FORMS = [
+  { k:'masu', n:'ます形', tip:'丁寧體的現在形。〜ます' },
+  { k:'te',   n:'て形',   tip:'接續用。〜てください、〜ています 都靠它' },
+  { k:'ta',   n:'た形',   tip:'普通體的過去形。〜た' },
+  { k:'nai',  n:'ない形', tip:'普通體的否定形。〜ない' },
+];
+const CONJ_FORM_N = k => (CONJ_FORMS.find(f => f.k === k) || {}).n || k;
+
+/** 這個字能不能拿來練活用？（只練動詞和い形容詞；な形容詞變化太單一） */
+function conjable(w){
+  const p = w.pos || '';
+  if(p.startsWith('動詞')) return true;
+  if(p === 'い形容詞') return true;
+  return false;
+}
+
+/** 把 base（漢字或假名的辭書形）依詞性變成指定活用形 */
+function conjOne(base, pos, form){
+  if(!base) return null;
+  if(IRREG[base]) return IRREG[base][form];
+  if(KEIGO_RA[base]) return KEIGO_RA[base][form];
+  const stem = base.slice(0, -1), last = base.slice(-1);
+
+  if(pos === 'い形容詞'){
+    if(last !== 'い') return null;
+    return stem + IADJ[form];
+  }
+  if(pos.includes('一段')) return last === 'る' ? stem + ICHIDAN[form] : null;
+  if(pos.includes('不規則')){
+    if(base.endsWith('する')) return base.slice(0, -2) + IRREG['する'][form];
+    if(base.endsWith('ずる')) return base.slice(0, -2) + ZURU[form];
+    return null;
+  }
+  if(pos.includes('五段')){
+    // 行く 是唯一的例外：て形／た形 走「って／った」而不是「いて／いた」
+    if(base === '行く' && (form === 'te' || form === 'ta')) return stem + (form === 'te' ? 'って' : 'った');
+    const r = GODAN[last];
+    return r ? stem + r[form] : null;
+  }
+  return null;
+}
+
+/** 正解（漢字形）＋讀音（假名形），讀音給 🔊 用 */
+function conjugate(w, form){
+  return {
+    ans:  conjOne(w.word, w.pos, form),
+    kana: conjOne(w.kana, w.pos === 'い形容詞' ? 'い形容詞' : w.pos, form),
+  };
+}
+
+/** 用「錯的規則」算出干擾選項 —— 初學者最常犯的錯就長這樣 */
+function conjDistractors(w, form, correct){
+  const stem = w.word.slice(0, -1);
+  const cand = [];
+  Object.values(GODAN).forEach(r => cand.push(stem + r[form]));   // 套錯組別
+  cand.push(stem + ICHIDAN[form]);                                // 當成一段動詞
+  cand.push(w.word + ICHIDAN[form]);                              // 直接接在辭書形後面
+  // must = 這個字的「招牌錯誤」，一定要出現在選項裡，不能靠 pick() 隨機抽中
+  const must = [];
+  if(KEIGO_RA[w.word]) must.push(stem + GODAN['る'][form]);   // いらっしゃります
+  if(w.word.endsWith('ずる')){
+    const z = w.word.slice(0, -2);
+    // ずる 有兩種招牌錯：當成一段（留著ず）、當成五段る行（ずり＋）
+    must.push(z + 'ず' + ICHIDAN[form], z + 'ずり' + ICHIDAN[form]);
+    cand.push(w.word + ICHIDAN[form]);
+  }
+  if(w.pos === 'い形容詞') cand.push(stem + 'い' + ICHIDAN[form]);
+  const keep = [...new Set(must.filter(x => x && x !== correct))].slice(0, 2);
+  const rest = pick([...new Set(cand.filter(x => x && x !== correct && keep.indexOf(x) < 0))], 3 - keep.length);
+  return shuffle(keep.concat(rest));
+}
+
+let conjSes = null;   // { items:[{w, form, shown}], i, wrong:[], answered }
+
+function renderConj(box){
+  if(!conjSes) return renderConjSetup(box);
+  if(conjSes.i >= conjSes.items.length) return renderConjResult(box);
+  renderConjItem(box);
+}
+
+function renderConjSetup(box){
+  const pool = WORDS.filter(conjable);
+  const byPos = {};
+  pool.forEach(w => { byPos[w.pos] = (byPos[w.pos] || 0) + 1; });
+  const st = S.conj || {};
+  const rows = CONJ_FORMS.map(f => {
+    const s = st[f.k] || { ok:0, ng:0 };
+    const tot = s.ok + s.ng;
+    return { f, s, tot, r: tot ? s.ok / tot : null };
+  });
+
+  $('#pageSub').textContent = pool.length + ' 個字可以練活用';
+  box.innerHTML = `
+    <div class="card">
+      <h3 style="margin-top:0">活用練習</h3>
+      <p class="muted" style="margin-top:4px">
+        給你辭書形，你選出正確的活用形。<b>干擾選項是用錯誤的規則算出來的</b> ——
+        例如「書く」的て形，錯的選項就是「書きて（直接接て）／書って（う・つ・る 組）／
+        書んで（む・ぶ・ぬ 組）」，剛好是最常犯的三種錯。</p>
+      ${pool.length < 4 ? `<div class="fieldhint" style="margin-top:12px">
+        可以練的字不到 4 個，湊不出選項。先到字庫加一些動詞。</div>` : `
+      <div class="grid g2" style="margin-top:14px">
+        <label>要練哪些活用形<br>
+          <select id="cjForm" style="width:100%;margin-top:6px">
+            <option value="all">全部混合（最推薦）</option>
+            ${CONJ_FORMS.map(f => `<option value="${f.k}">${f.n}　${f.tip}</option>`).join('')}
+          </select></label>
+        <label>出題範圍<br>
+          <select id="cjScope" style="width:100%;margin-top:6px">
+            <option value="all">全部可練的字（${pool.length}）</option>
+            ${Object.keys(byPos).sort().map(p => `<option value="pos:${esc(p)}">${esc(p)}（${byPos[p]}）</option>`).join('')}
+            ${['N5','N4','N3','N2','N1'].filter(x => pool.some(w => w.level === x))
+              .map(x => `<option value="level:${x}">JLPT ${x}（${pool.filter(w => w.level === x).length}）</option>`).join('')}
+          </select></label>
+        <label>題數<br>
+          <input id="cjLen" type="number" min="5" max="60" value="20" style="width:100%;margin-top:6px"></label>
+      </div>
+      <button class="btn" style="margin-top:16px" onclick="startConj()">開始練習</button>
+      <div class="fieldhint" style="margin-top:12px">
+        答對答錯一樣會餵回間隔重複排程，所以這裡練也算在今天的複習量裡。
+      </div>`}
+    </div>
+
+    <h2 class="sec">活用規則整理</h2>
+    <div class="card">
+      <table><thead><tr><th>類型</th><th>ます形</th><th>て形</th><th>た形</th><th>ない形</th></tr></thead>
+      <tbody>
+        <tr><td><b>一段</b>　食べる</td><td class="jp">食べます</td><td class="jp">食べて</td><td class="jp">食べた</td><td class="jp">食べない</td></tr>
+        ${Object.entries(GODAN).map(([k, r]) => `<tr>
+          <td><b>五段</b>　語尾 <span class="jp">${k}</span></td>
+          <td class="jp">〜${esc(r.masu)}</td><td class="jp">〜${esc(r.te)}</td>
+          <td class="jp">〜${esc(r.ta)}</td><td class="jp">〜${esc(r.nai)}</td></tr>`).join('')}
+        <tr><td><b>い形容詞</b>　忙しい</td><td class="jp">忙しいです</td><td class="jp">忙しくて</td><td class="jp">忙しかった</td><td class="jp">忙しくない</td></tr>
+        <tr><td><b>不規則</b>　する</td><td class="jp">します</td><td class="jp">して</td><td class="jp">した</td><td class="jp">しない</td></tr>
+        <tr><td><b>不規則</b>　来る</td><td class="jp">来ます</td><td class="jp">来て</td><td class="jp">来た</td><td class="jp">来ない</td></tr>
+      </tbody></table>
+      <div class="fieldhint" style="margin-top:10px">
+        <b>唯一要單獨背的例外：</b>行く 的て形是「行って」不是「行いて」。
+      </div>
+    </div>
+
+    ${rows.some(x => x.tot) ? `<h2 class="sec">你各種活用形的正確率</h2>
+      <div class="card"><table><tbody>
+        ${rows.filter(x => x.tot).sort((a,b) => a.r - b.r).map(x => `<tr>
+          <td style="width:110px"><b>${x.f.n}</b></td>
+          <td style="width:130px"><div class="bar" style="width:120px"><i style="width:${x.r * 100}%;
+            background:${x.r >= 0.8 ? 'var(--ok)' : x.r >= 0.6 ? 'var(--warn)' : 'var(--ng)'}"></i></div></td>
+          <td style="text-align:right">${x.s.ok} / ${x.tot}</td></tr>`).join('')}
+      </tbody></table></div>` : ''}`;
+}
+
+function startConj(){
+  const formSel = $('#cjForm').value, scope = $('#cjScope').value;
+  const len = Math.max(1, Math.min(60, +$('#cjLen').value || 20));
+
+  let pool = WORDS.filter(conjable);
+  if(scope.startsWith('pos:'))   pool = pool.filter(w => w.pos === scope.slice(4));
+  if(scope.startsWith('level:')) pool = pool.filter(w => w.level === scope.slice(6));
+  if(!pool.length){ alert('這個範圍沒有可以練的字。'); return; }
+
+  const forms = formSel === 'all' ? CONJ_FORMS.map(f => f.k) : [formSel];
+  const items = [];
+  // 字不夠就重複抽，但同一個字盡量搭不同的活用形
+  for(let i = 0; items.length < len && i < len * 4; i++){
+    const w = pool[Math.floor(Math.random() * pool.length)];
+    const form = forms[Math.floor(Math.random() * forms.length)];
+    const c = conjugate(w, form);
+    if(!c.ans) continue;                                   // 算不出來就跳過（不出壞題）
+    if(items.some(x => x.w.id === w.id && x.form === form)) continue;
+    items.push({ w, form });
+  }
+  if(!items.length){ alert('湊不出題目，換個範圍試試。'); return; }
+  conjSes = { items, i:0, wrong:[], answered:null };
+  render(); window.scrollTo(0, 0);
+}
+
+function buildConjQ(it){
+  if(it.shown) return it.shown;
+  const c = conjugate(it.w, it.form);
+  const opts = shuffle([...new Set(conjDistractors(it.w, it.form, c.ans).concat([c.ans]))]);
+  it.shown = { correct: c.ans, kana: c.kana, opts };
+  return it.shown;
+}
+
+function renderConjItem(box){
+  const it = conjSes.items[conjSes.i];
+  const { correct, kana, opts } = buildConjQ(it);
+  const a = conjSes.answered;
+
+  box.innerHTML = `
+    <div class="row" style="justify-content:space-between">
+      <span class="muted">第 ${conjSes.i + 1} / ${conjSes.items.length} 題
+        <span class="pill">${esc(CONJ_FORM_N(it.form))}</span></span>
+      <span class="muted">答對 ${conjSes.i - conjSes.wrong.length} 題</span>
+    </div>
+    <div class="bar" style="margin:10px 0 18px"><i style="width:${conjSes.i / conjSes.items.length * 100}%"></i></div>
+
+    <div class="qstem small">
+      <span class="jp">${ruby(it.w)}</span>
+      <span class="muted" style="font-size:15px">（${esc(it.w.pos)}・${esc(it.w.zh)}）</span>
+      <br>的 <b>${esc(CONJ_FORM_N(it.form))}</b> 是？
+    </div>
+
+    ${opts.map(o => `<button class="opt jp ${a ? (o === correct ? 'right' : (o === a.chosen ? 'wrong' : '')) : ''}"
+      ${a ? 'disabled' : ''} onclick="conjAnswer(${jsAttr(o)})">${esc(o)}</button>`).join('')}
+
+    ${a ? `<div class="card" style="margin-top:16px">
+      <div class="${a.ok ? 'ok' : 'ng'}" style="font-weight:700;color:${a.ok ? 'var(--ok)' : 'var(--ng)'}">
+        ${a.ok ? '✓ 正確' : '✗ 答錯了'}</div>
+      <div class="jp" style="font-size:20px;margin-top:8px">${esc(correct)}
+        <span class="muted jp" style="font-size:15px">${esc(kana || '')}</span>
+        <button class="spk" onclick="speak(${jsAttr(kana || correct)})">🔊</button></div>
+      <div class="muted" style="margin-top:8px">${conjWhy(it)}</div>
+      <button class="btn" style="margin-top:12px" onclick="nextConj()">下一題</button>
+    </div>` : ''}`;
+}
+
+/** 講清楚「為什麼是這樣變」——答錯時最需要的就是這句 */
+function conjWhy(it){
+  const w = it.w, form = it.form, last = w.word.slice(-1);
+  const fn = CONJ_FORM_N(form);
+  if(IRREG[w.word]) return esc(w.word) + ' 是不規則動詞，' + fn + '要單獨記。';
+  if(KEIGO_RA[w.word]) return esc(w.word) + ' 是ラ行特殊五段（敬語動詞），'
+    + fn + '是「' + esc(KEIGO_RA[w.word][form]) + '」；ます形特別要注意，是「い」不是「り」。';
+  if(w.word.endsWith('ずる')) return esc(w.word) + ' 是サ變的文語形，語尾「ずる」換成「' + esc(ZURU[form]) + '」（現代也常寫成〜じる）。';
+  if(w.pos === 'い形容詞') return 'い形容詞把語尾「い」換成「' + esc(IADJ[form]) + '」。';
+  if(w.pos.includes('一段')) return '一段動詞把語尾「る」換成「' + esc(ICHIDAN[form]) + '」。';
+  if(w.word === '行く' && (form === 'te' || form === 'ta'))
+    return '行く 是唯一的例外：語尾雖然是「く」，て形卻是「行って」而不是「行いて」。';
+  const r = GODAN[last];
+  if(r) return '五段動詞、語尾是「' + esc(last) + '」，' + fn + '換成「〜' + esc(r[form]) + '」。';
+  return '';
+}
+
+function conjAnswer(chosen){
+  if(conjSes.answered) return;
+  const it = conjSes.items[conjSes.i];
+  const { correct } = buildConjQ(it);
+  const ok = chosen === correct;
+  conjSes.answered = { chosen, ok };
+  if(!ok) conjSes.wrong.push(conjSes.i);
+
+  // 活用形別的正確率，練完會在設定頁上方看到
+  S.conj = S.conj || {};
+  const s = S.conj[it.form] || (S.conj[it.form] = { ok:0, ng:0 });
+  ok ? s.ok++ : s.ng++;
+  grade(it.w.id, ok ? 'good' : 'again');   // 一樣餵回間隔重複排程
+  render();
+}
+function nextConj(){ conjSes.i++; conjSes.answered = null; render(); window.scrollTo(0, 0); }
+
+function renderConjResult(box){
+  const n = conjSes.items.length, wrong = conjSes.wrong.length, ok = n - wrong;
+  const pct = Math.round(ok / n * 100);
+  const color = pct >= 80 ? 'var(--ok)' : pct >= 60 ? 'var(--warn)' : 'var(--ng)';
+  const byForm = {};
+  conjSes.items.forEach((it, i) => {
+    const r = byForm[it.form] || (byForm[it.form] = { ok:0, total:0 });
+    r.total++; if(!conjSes.wrong.includes(i)) r.ok++;
+  });
+  $('#pageSub').textContent = '練習結果';
+
+  box.innerHTML = `
+    <div class="card" style="text-align:center">
+      <div style="font-size:52px;font-weight:700;color:${color}">${pct} 分</div>
+      <div class="muted">答對 ${ok} / ${n} 題</div>
+      <div class="row" style="justify-content:center;margin-top:16px">
+        <button class="btn" onclick="conjSes=null;render()">再練一輪</button>
+        <button class="btn ghost" onclick="conjSes=null;go('dash')">回進度</button>
+      </div>
+    </div>
+
+    <h2 class="sec">各活用形</h2>
+    <div class="card"><table><tbody>
+      ${Object.entries(byForm).sort((a,b) => a[1].ok / a[1].total - b[1].ok / b[1].total).map(([k, v]) => `<tr>
+        <td style="width:110px"><b>${esc(CONJ_FORM_N(k))}</b></td>
+        <td style="width:130px"><div class="bar" style="width:120px"><i style="width:${v.ok / v.total * 100}%;
+          background:${v.ok / v.total >= 0.8 ? 'var(--ok)' : v.ok / v.total >= 0.6 ? 'var(--warn)' : 'var(--ng)'}"></i></div></td>
+        <td style="text-align:right">${v.ok} / ${v.total}</td></tr>`).join('')}
+    </tbody></table></div>
+
+    ${wrong ? `<h2 class="sec">答錯的（${wrong}）</h2>
+      ${conjSes.wrong.map(i => { const it = conjSes.items[i]; const s = buildConjQ(it); return `
+        <div class="card" style="margin-bottom:10px">
+          <div class="jp"><b>${esc(it.w.word)}</b> 的 ${esc(CONJ_FORM_N(it.form))} →
+            <b style="color:var(--ok)">${esc(s.correct)}</b></div>
+          <div class="muted" style="margin-top:6px">${conjWhy(it)}</div>
+        </div>`; }).join('')}` : ''}`;
+}
+
+
+/* ==================================================================
+   17) 深色模式 + 啟動
+   ================================================================== */
+function applyTheme(){
+  const t = S.cfg.theme === 'auto'
+    ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : S.cfg.theme;
+  document.documentElement.dataset.theme = t;
+}
+$('#themeBtn').onclick = () => {
+  S.cfg.theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  save(); applyTheme();
+};
+
+/* 手機支援：只有用「網址」開啟時才啟動 manifest 與離線快取。
+   在電腦上用 file:// 雙擊開啟時完全不碰，避免無謂的錯誤訊息。 */
+if(location.protocol === 'http:' || location.protocol === 'https:'){
+  const l = document.createElement('link');
+  l.rel = 'manifest'; l.href = 'manifest.json';
+  document.head.appendChild(l);
+
+  const canSW = 'serviceWorker' in navigator &&
+    (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  if(canSW) navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+applyTheme();
+refreshChrome();
+go('dash');
+</script>
+</body>
+</html>
